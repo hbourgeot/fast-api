@@ -1,0 +1,176 @@
+@import url("https://fonts.googleapis.com/css2?family=Nerko+One&family=Roboto&family=Roboto+Condensed:wght@400;700&display=swap");
+
+/* Font Style */
+
+body {
+  font-family: "Roboto Condensed", sans-serif;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: "Nerko One", cursive;
+  font-weight: 400;
+}
+
+/* Globals */
+*,
+*::after,
+*::before {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 62.5%;
+}
+
+@media only screen and (max-width: 68.75em) {
+  html {
+    font-size: 50%;
+  }
+}
+
+body {
+  background-color: #eee;
+  color: #222;
+  font-size: 2rem;
+  position: relative;
+  z-index: -1;
+}
+
+h1 {
+  font-size: 5rem;
+}
+
+h2 {
+  font-size: 4rem;
+}
+
+h3 {
+  font-size: 3.5rem;
+}
+
+h4 {
+  font-size: 3rem;
+}
+
+/* Utilidades */
+.hidden {
+  display: none;
+}
+
+.btn {
+  background: linear-gradient(90deg, #004c97, #554c97);
+  margin: 0 auto;
+  color: #fff;
+  text-decoration: none;
+  padding: 1.5rem;
+  border-radius: 2.5rem;
+}
+
+/* Nav */
+
+.nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  background-color: #fff;
+  -webkit-box-shadow: 0px 5px 15px 5px rgba(0, 0, 0, 0.34);
+  -moz-box-shadow: 0px 5px 15px 5px rgba(0, 0, 0, 0.34);
+  box-shadow: 0px 5px 15px 5px rgba(0, 0, 0, 0.34);
+  position: -webkit-sticky;
+  position: sticky;
+  top: 0;
+}
+
+.nav__title {
+  flex-grow: 1.7;
+}
+
+.nav__title a,
+.bar__item a {
+  color: #222;
+  text-decoration: none;
+  transition: color 200ms;
+}
+
+.nav__btn {
+  border: none;
+  font-size: 3rem;
+  outline: none;
+}
+
+.bar {
+  flex-grow: 1.3;
+  list-style: none;
+  display: inherit;
+  justify-content: space-around;
+}
+
+.bar__item a:hover,
+.bar__item--active a {
+  color: blue;
+}
+
+/* Bar media queries */
+
+@media only screen and (min-width: 570px) {
+  button {
+    display: none;
+  }
+}
+
+@media only screen and (max-width: 570px) {
+  .nav {
+    display: grid;
+    grid-template-columns: 2, 1fr;
+  }
+  .bar {
+    grid-column: 1 / 3;
+    padding-top: 3rem;
+    text-align: center;
+    height: 300px;
+  }
+}
+
+/* Hero */
+
+.hero {
+  height: 600px;
+  background-image: url(../images/hero.webp);
+  background-attachment: fixed;
+  background-size: cover;
+  color: #eee;
+  z-index: -1;
+}
+
+.overlay {
+  background-color: rgba(0, 0, 0, 0.69);
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-content: center;
+  gap: 1.5rem;
+  padding: 4rem;
+  text-align: center;
+  z-index: -1;
+}
+
+.hero__title {
+  font-size: 5rem;
+}
+
+/* Main */
+.main {
+  max-width: 90%;
+  margin: 0 auto;
+  padding: 6rem 4rem;
+}
