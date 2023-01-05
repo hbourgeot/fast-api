@@ -46,7 +46,7 @@ def mostrar_proyectos(request: Request, db: Session = Depends(get_database_sessi
   return templates.TemplateResponse("proyectos.html", {"request": request, "message": mensaje[0]})
 
 @app.post("/crear/proyecto")
-def nuevo_proyecto():
+def nuevo_proyecto(proyecto: model.Proyectos = Body(...)):
   # crea un proyecto
   return
 
@@ -60,20 +60,20 @@ def borrar_proyecto():
   # borra un proyecto
   return
 
-@app.get("/proyecto/{proyectoId}")
+@app.get("/proyecto/{proyectoId}", response_class=HTMLResponse)
 def mostrar_proyecto():
   # TODO: mostrar cada proyecto
   return
 
 # Operaciones de tareas
 
-@app.get("/tareas")
+@app.get("/tareas", response_class=HTMLResponse)
 def mostrar_tareas():
   # muestra las tareas
   return
 
 @app.post("/crear/tarea")
-def nueva_tarea():
+def nueva_tarea(tarea: model.Tareas = Body(...)):
   # crea una tarea
   return
 
@@ -87,14 +87,14 @@ def borrar_tarea():
   # borra una tarea
   return
 
-@app.get("/tarea/{tareaId}")
+@app.get("/tarea/{tareaId}", response_class=HTMLResponse)
 def mostrar_tarea():
   # muestra cada tarea
   return
 
 # Operaciones de documentos asociados a cierta tarea
 
-@app.get("/tarea/{tareaId}/documentos")
+@app.get("/tarea/{tareaId}/documentos", response_class=HTMLResponse)
 def docs_tarea():
   # muestra las distintas versiones de los documentos de una tarea
   return
@@ -106,7 +106,7 @@ def crear_doc():
 
 # Operaciones de usuario
 
-@app.get("/signup")
+@app.get("/signup", response_class=HTMLResponse)
 def crear_cuenta():
   # crea una cuenta
   return
@@ -131,7 +131,7 @@ def panel(request: Request):
   # muestra el dashboard con proyectos y tareas a los que se pueden adscribir los clientes
   return
 
-@app.get("/user/{usuarioId}/detalles")
+@app.get("/user/{usuarioId}/detalles", response_class=HTMLResponse)
 def mostrar_usuario():
   # mostrar detalles del usuario
   return
@@ -147,11 +147,11 @@ def borrar_usuario():
   return
 
 @app.post("/asignar/{usuarioId}/{proyectoId}")
-def asignar_proyecto():
+def asignar_proyecto(proyecto_asignar: model.EmpleadoProyecto = Body(...)):
   # asigna un usuario a un proyecto
   return
 
 @app.post("/asignar/{usuarioId}/{tareaId}")
-def asignar_tarea():
+def asignar_tarea(tarea_asignar: model.EmpleadoTareas = Body(...)):
   # asigna un usuario a una tarea
   return
