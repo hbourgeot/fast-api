@@ -1,6 +1,7 @@
 from database import Base
 from sqlalchemy import Column, ForeignKey
 from sqlalchemy.types import Integer, Date, String, Time
+
 from sqlalchemy.orm import relationship
 
 class Empleado(Base):
