@@ -1,17 +1,16 @@
 # Database
-from database import SessionLocal, engine
+from database import SesionLocal, engine, Base
 import model
 
 # FastAPI
 from fastapi import FastAPI, Depends, Request, Body
-from fastapi.responses import HTMLResponse
 
 # SQLAlchemy
 from sqlalchemy.orm import Session
 
 app = FastAPI()
 
-model.Base.metadata.create_all(bind=engine)
+Base.metadata.create_all(bind=engine)
 
 """
   ¿Qué es GET, POST, PUT Y DELETE?
@@ -26,18 +25,20 @@ model.Base.metadata.create_all(bind=engine)
 
 # Abrimos la conexion con la base de datos
 
+db: Session
 
 def obtener_bd():
+  global db
   try:
-    db = SessionLocal()
+    db = SesionLocal()
     return db
   finally:
     db.close()
 
-# CRUD de proyectos
+# Operaciones de proyectos
 
 
-@app.get("/proyectos", response_class=HTMLResponse)
+@app.get("/proyectos")
 def mostrar_proyectos(request: Request, db: Session = Depends(obtener_bd)):
   return {"proyectos": "Not finished"}
 
@@ -60,7 +61,7 @@ def borrar_proyecto(db: Session = Depends(obtener_bd)):
   return {"proyectos": "Not finished"}
 
 
-@app.get("/proyecto/{proyectoId}", response_class=HTMLResponse)
+@app.get("/proyecto/{proyectoId}")
 def mostrar_proyecto(db: Session = Depends(obtener_bd)):
   # TODO: mostrar cada proyecto
   return {"proyectos": "Not finished"}
@@ -68,7 +69,7 @@ def mostrar_proyecto(db: Session = Depends(obtener_bd)):
 
 # Operaciones de tareas
 
-@app.get("/tareas", response_class=HTMLResponse)
+@app.get("/tareas")
 def mostrar_tareas(db: Session = Depends(obtener_bd)):
   # muestra las tareas
   return
@@ -92,15 +93,15 @@ def borrar_tarea(db: Session = Depends(obtener_bd)):
   return
 
 
-@app.get("/tarea/{tareaId}", response_class=HTMLResponse)
+@app.get("/tarea/{tareaId}")
 def mostrar_tarea(db: Session = Depends(obtener_bd)):
-  # muestra cada tarea
+  # muestra una tarea
   return
 
 
 # Operaciones de documentos asociados a cierta tarea
 
-@app.get("/tarea/{tareaId}/documentos", response_class=HTMLResponse)
+@app.get("/tarea/{tareaId}/documentos")
 def docs_tarea(db: Session = Depends(obtener_bd)):
   # muestra las distintas versiones de los documentos de una tarea
   return
@@ -114,63 +115,63 @@ def crear_doc(db: Session = Depends(obtener_bd)):
 
 # Operaciones de usuario
 
-@app.get("/signup", response_class=HTMLResponse)
-def crear_cuenta(db: Session = Depends(obtener_bd)):
-  # crea una cuenta
+@app.get("/empleados")
+def obtener_empleados(db: Session = Depends(obtener_bd)):
+  # obtiene un empleado
   return
 
 
-@app.post("/signup")
-def crear_cuenta_post(request: Request, empleado: model.Empleado = Body(...), db: Session = Depends(obtener_bd)):
-  # verifica los datos y los envia
+@app.get("/empleado/{empleadoId}")
+def obtener_empleado(db: Session = Depends(obtener_bd)):
+  # obtiene un empleado
   return
 
 
-@app.get("/login", response_class=HTMLResponse)
-def login_get(request: Request, db: Session = Depends(obtener_bd)):
-  # Muestra el HTML para iniciar sesión
+@app.post("/nuevo/empleado")
+def crear_empleado(request: Request, empleado: model.Empleado = Body(...), db: Session = Depends(obtener_bd)):
+  # verifica los datos para crear un nuevo empleado
   return
 
 
-@app.post("/login", response_class=HTMLResponse)
+@app.post("/nuevo/promotor")
+def crear_promotor(request: Request, empleado: model.Empleado = Body(...), db: Session = Depends(obtener_bd)):
+  # verifica los datos para crear un nuevo promotor de proyecto
+  return
+
+
+@app.post("/login")
 def login_post(request: Request, db: Session = Depends(obtener_bd)):
   # Recibe los datos del formulario y valida los datos
   return
 
 
-@app.get("/dashboard/{usuarioId}", response_class=HTMLResponse)
-def panel(request: Request, db: Session = Depends(obtener_bd)):
-  # muestra el dashboard con proyectos y tareas a los que se pueden adscribir los clientes
+@app.get("/empleado/{empleadoId}/detalles")
+def empleado_detalles(db: Session = Depends(obtener_bd)):
+  # mostrar detalles del empleado
   return
 
 
-@app.get("/user/{usuarioId}/detalles", response_class=HTMLResponse)
-def mostrar_usuario(db: Session = Depends(obtener_bd)):
-  # mostrar detalles del usuario
+@app.patch("/modificar/empleado")
+def modificar_empleado(db: Session = Depends(obtener_bd)):
+  # modifica datos del empleado
   return
 
 
-@app.patch("/modificar/usuario")
-def modificar_usuario(db: Session = Depends(obtener_bd)):
-  # modifica datos del usuario
-  return
-
-
-@app.delete("/borrar/usuario")
-def borrar_usuario(db: Session = Depends(obtener_bd)):
-  # modifica datos del usuario
+@app.delete("/borrar/empleado")
+def borrar_empleado(db: Session = Depends(obtener_bd)):
+  # modifica datos del empleado
   return
 
 # Asignaciones
 
 
-@app.post("/asignar/{usuarioId}/{proyectoId}")
+@app.post("/asignar/{empleadoId}/{proyectoId}")
 def asignar_proyecto(proyecto_asignar: model.EmpleadoProyecto = Body(...), db: Session = Depends(obtener_bd)):
-  # asigna un usuario a un proyecto
+  # asigna un empleado a un proyecto
   return
 
 
-@app.post("/asignar/{usuarioId}/{tareaId}")
+@app.post("/asignar/{empleadoId}/{tareaId}")
 def asignar_tarea(tarea_asignar: model.EmpleadoTareas = Body(...), db: Session = Depends(obtener_bd)):
-  # asigna un usuario a una tarea
+  # asigna un empleado a una tarea
   return
