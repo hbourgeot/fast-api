@@ -15,6 +15,8 @@ class Empleado(Base):
 
 class Promotor(Base):
   id = Column(Integer, primary_key=True)
+  usuario = Column(String(20))
+  contra = Column(String(16))
   cedula_empleado = Column(ForeignKey("empleado.cedula"))
 
 

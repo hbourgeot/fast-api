@@ -15,6 +15,8 @@ class Empleado(BaseModel):
 
 class Promotor(BaseModel):
   id: int
+  usuario: str
+  contra: str
   cedula_empleado: int
 
 

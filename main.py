@@ -4,7 +4,7 @@ import model
 
 # FastAPI
 from fastapi import FastAPI, Depends, Request, Body
-
+from fastapi.exceptions import FastAPIError, RequestValidationError
 # SQLAlchemy
 from sqlalchemy.orm import Session
 
@@ -26,6 +26,7 @@ Base.metadata.create_all(bind=engine)
 # Abrimos la conexion con la base de datos
 
 db: Session
+
 
 def obtener_bd():
   global db
@@ -134,15 +135,27 @@ def crear_empleado(request: Request, empleado: model.Empleado = Body(...), db: S
 
 
 @app.post("/nuevo/promotor")
-def crear_promotor(request: Request, empleado: model.Empleado = Body(...), db: Session = Depends(obtener_bd)):
-  # verifica los datos para crear un nuevo promotor de proyecto
+def crear_promotor(request: Request, empleado: model.Promotor = Body(...), db: Session = Depends(obtener_bd)):
+  # verifica los datos para crear un nuevo promotor de proyeczto
   return
 
 
 @app.post("/login")
-def login_post(request: Request, db: Session = Depends(obtener_bd)):
-  # Recibe los datos del formulario y valida los datos
-  return
+def login_post(request: Request, empleado: model.Promotor, db: Session = Depends(obtener_bd)):
+  usuario_login: model.Promotor
+  try:  # este bloque de código ejecuta to do lo que se encuentre dentro
+    global usuario_login
+    usuarios = db.query(model.Promotor).all()  # obtenemos los usuarios
+    for usuario in usuarios:  # iteramos los usuarios
+      usuario_login = db.query(model.Promotor).filter(empleado.usuario is usuario.usuario and
+                                                      empleado.contra is usuario.contra).first()  # si conseguimos al usuario
+
+    if usuario_login.usuario is not None and usuario_login.contra is not None:  # si el usuario existe
+      return {"confirmado": "si"}  # estara loggeado
+    else:
+      return {"confirmado": "no"}  # si no, no lo estará
+  except Exception as e:  # si al ejecutar algo sucede un error o excepcion, se ejecutara esto
+    raise RequestValidationError(str(e))
 
 
 @app.get("/empleado/{empleadoId}/detalles")
