@@ -10,11 +10,14 @@ class Empleado(BaseModel):
   direccion: str
   correo: str
   telefono: str
-  fecha_contrato: date
+  fecha_contratacion: date
 
+class PromotorLogin(BaseModel):
+  usuario: str
+  contra: str
 
 class Promotor(BaseModel):
-  id: int
+  codigo: int
   usuario: str
   contra: str
   cedula_empleado: int
