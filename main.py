@@ -1,10 +1,11 @@
 # Database
+import schemas
 from database import SesionLocal, engine, Base
 import model
 
 # FastAPI
 from fastapi import FastAPI, Depends, Request, Body
-from fastapi.exceptions import FastAPIError, RequestValidationError
+from fastapi.exceptions import HTTPException
 # SQLAlchemy
 from sqlalchemy.orm import Session
 
@@ -22,6 +23,9 @@ Base.metadata.create_all(bind=engine)
 
   ¿Y qué son estos? son los métodos de HTTP, recomiendo que lean más acerca de ellos
 """
+
+# TODO: continuar el crud de empleado
+# TODO DONE 11/1/2023: login, crear_empleado, crear_promotors
 
 # Abrimos la conexion con la base de datos
 
@@ -129,33 +133,46 @@ def obtener_empleado(db: Session = Depends(obtener_bd)):
 
 
 @app.post("/nuevo/empleado")
-def crear_empleado(request: Request, empleado: model.Empleado = Body(...), db: Session = Depends(obtener_bd)):
-  # verifica los datos para crear un nuevo empleado
-  return
+def crear_empleado(empleado: model.Empleado = Body(...), db: Session = Depends(obtener_bd)):
+  try:
+    nuevo_empleado = schemas.Empleado(**empleado.dict())      # creamos al nuevo empleado
+    db.add(nuevo_empleado)                                    # lo agregamos a la bd
+    db.commit()                                               # confirmamos la inserción
+    db.refresh(nuevo_empleado)                                # refrescamos los valores en la variable
+
+    return {"estado": "exitoso", "empleado": nuevo_empleado}  # retornamos al nuevo empleado
+  except Exception as e:
+    raise HTTPException(400, str(e))
 
 
 @app.post("/nuevo/promotor")
-def crear_promotor(request: Request, empleado: model.Promotor = Body(...), db: Session = Depends(obtener_bd)):
-  # verifica los datos para crear un nuevo promotor de proyeczto
-  return
+def crear_promotor(request: Request, promotor: model.Promotor = Body(...), db: Session = Depends(obtener_bd)):
+  try:
+    nuevo_promotor = schemas.Promotor(**promotor.dict())  # creamos al nuevo promotor
+    db.add(nuevo_promotor)                                # mismo que función anterior
+    db.commit()
+    db.refresh(nuevo_promotor)
+
+    return {"estado": "exitoso", "promotor": nuevo_promotor}
+  except Exception as e:
+    raise HTTPException(400, str(e))
 
 
 @app.post("/login")
-def login_post(request: Request, empleado: model.Promotor, db: Session = Depends(obtener_bd)):
-  usuario_login: model.Promotor
+def login_post(request: Request, usuario: model.PromotorLogin, db: Session = Depends(obtener_bd)):
   try:  # este bloque de código ejecuta to do lo que se encuentre dentro
-    global usuario_login
-    usuarios = db.query(model.Promotor).all()  # obtenemos los usuarios
-    for usuario in usuarios:  # iteramos los usuarios
-      usuario_login = db.query(model.Promotor).filter(empleado.usuario is usuario.usuario and
-                                                      empleado.contra is usuario.contra).first()  # si conseguimos al usuario
+    promotores = db.query(schemas.Promotor).all()  # obtenemos los promotores
+    for promotor in promotores:  # iteramos los promotores
 
-    if usuario_login.usuario is not None and usuario_login.contra is not None:  # si el usuario existe
-      return {"confirmado": "si"}  # estara loggeado
-    else:
-      return {"confirmado": "no"}  # si no, no lo estará
+      # lo que está dentro de filter, es literalmente esta sentencia: WHERE usuario = "usuario" AND contra = "contra"
+      usuario_login = db.query(schemas.Promotor).filter(usuario.usuario == promotor.usuario and
+                                                        usuario.contra == promotor.contra).first()
+    if usuario_login is None: # si no conseguimos al usuario
+      return {"confirmado": "no"}  # no estara confirmado
+    else:  # de lo contrario
+      return {"confirmado": "si"}  # estará confirmado
   except Exception as e:  # si al ejecutar algo sucede un error o excepcion, se ejecutara esto
-    raise RequestValidationError(str(e))
+    raise HTTPException(400, str(e))
 
 
 @app.get("/empleado/{empleadoId}/detalles")
