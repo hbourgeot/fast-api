@@ -1,6 +1,6 @@
 from database import Base
 from sqlalchemy import Column, ForeignKey
-from sqlalchemy.types import Integer, Date, String, Time
+from sqlalchemy.types import Integer, Date, String, Time, Text
 
 
 class Empleado(Base):
@@ -39,6 +39,22 @@ class Tareas(Base):
   fecha_real = Column(Date)
   fecha_estimada = Column(Date)
   tipo = Column(String(60))
+
+
+class Documentos(Base):
+  codigo = Column(Integer, primary_key=True)
+  documento_especificacion = Column(String(60))
+  codigo_fuente = Column(Integer)
+  descripcion = Column(Text)
+  tipo = Column(String(60))
+  codigo_tareas = Column(ForeignKey("tareas.codigo"))
+
+
+class Version(Base):
+  codigo = Column(Integer, primary_key=True)
+  fecha = Column(Date)
+  descripcion = Column(String(60))
+  codigo_documentos = Column(ForeignKey("documentos.codigo"))
 
 
 class EmpleadoTareas(Base):

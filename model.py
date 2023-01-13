@@ -12,9 +12,11 @@ class Empleado(BaseModel):
   telefono: str
   fecha_contratacion: date
 
+
 class PromotorLogin(BaseModel):
   usuario: str
   contra: str
+
 
 class Promotor(BaseModel):
   codigo: int
@@ -37,6 +39,22 @@ class Tareas(BaseModel):
   duracion_real: time
   fecha_real: date
   tipo: str
+
+
+class Documentos(BaseModel):
+  codigo: int
+  documento_especificacion: str
+  codigo_fuente: int
+  descripcion: str
+  tipo: str
+  codigo_tarea: int
+
+
+class Version(BaseModel):
+  codigo: int
+  fecha: date
+  descripcion: str
+  codigo_documentos: int
 
 
 class EmpleadoTareas(BaseModel):
