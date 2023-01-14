@@ -27,7 +27,8 @@ Base.metadata.create_all(bind=engine)
 
 # TODO: continuar el crud de empleado
 # TODO DONE 11/1/2023: login, crear_empleado, crear_promotor
-# TODO DONE 12:1/2023: terminadas rutas POST :D
+# TODO DONE 12/1/2023: terminadas rutas POST simples :D
+# TODO DONE 13/1/2023: adelantadas rutas de asignacion de proyectos y tareas
 
 # Abrimos la conexion con la base de datos
 
@@ -53,12 +54,12 @@ def mostrar_proyectos(db: Session = Depends(obtener_bd)):
 @app.post("/crear/proyecto")
 def agregar_proyecto(proyecto: model.Proyectos = Body(...), db: Session = Depends(obtener_bd)):
   try:
-    nuevo_proyecto = schemas.Proyectos(**proyecto.dict())  # creamos al nuevo empleado
-    db.add(nuevo_proyecto)  # lo agregamos a la bd
-    db.commit()  # confirmamos la inserción
-    db.refresh(nuevo_proyecto)  # refrescamos los valores en la variable
+    nuevo_proyecto = schemas.Proyectos(**proyecto.dict())     # creamos al nuevo proyecto
+    db.add(nuevo_proyecto)                                    # lo agregamos a la bd
+    db.commit()                                               # confirmamos la inserción
+    db.refresh(nuevo_proyecto)                                # refrescamos los valores en la variable
 
-    return {"estado": "exitoso", "empleado": nuevo_proyecto}  # retornamos al nuevo empleado
+    return {"estado": "exitoso", "empleado": nuevo_proyecto}  # retornamos al nuevo proyecto
   except Exception as e:
     raise HTTPException(400, str(e))
 
@@ -92,10 +93,10 @@ def mostrar_tareas(db: Session = Depends(obtener_bd)):
 @app.post("/crear/tarea")
 def agregar_tarea(tarea: model.Tareas = Body(...), db: Session = Depends(obtener_bd)):
   try:
-    nueva_tarea = schemas.Tareas(**tarea.dict())  # creamos al nuevo empleado
-    db.add(nueva_tarea)  # lo agregamos a la bd
-    db.commit()  # confirmamos la inserción
-    db.refresh(nueva_tarea)  # refrescamos los valores en la variable
+    nueva_tarea = schemas.Tareas(**tarea.dict())        # creamos a la nueva tarea
+    db.add(nueva_tarea)                                 # lo agregamos a la bd
+    db.commit()                                         # confirmamos la inserción
+    db.refresh(nueva_tarea)                             # refrescamos los valores en la variable
 
     return {"estado": "exitoso", "tarea": nueva_tarea}  # retornamos al nuevo empleado
   except Exception as e:
@@ -132,10 +133,10 @@ def docs_tarea(db: Session = Depends(obtener_bd)):
 def crear_doc(tarea_id: int, documento: model.Documentos, db: Session = Depends(obtener_bd)):
   try:
     documento.codigo_tarea = tarea_id
-    nuevo_doc = schemas.Empleado(**documento.dict())  # creamos al nuevo empleado
-    db.add(nuevo_doc)  # lo agregamos a la bd
-    db.commit()  # confirmamos la inserción
-    db.refresh(nuevo_doc)  # refrescamos los valores en la variable
+    nuevo_doc = schemas.Empleado(**documento.dict())      # creamos al nuevo documento
+    db.add(nuevo_doc)                                     # lo agregamos a la bd
+    db.commit()                                           # confirmamos la inserción
+    db.refresh(nuevo_doc)                                 # refrescamos los valores en la variable
 
     return {"estado": "exitoso", "documento": nuevo_doc}  # retornamos al nuevo empleado
   except Exception as e:
@@ -190,18 +191,20 @@ def crear_promotor(promotor: model.Promotor = Body(...), db: Session = Depends(o
 
 @app.post("/login")
 def login_post(usuario: model.PromotorLogin, db: Session = Depends(obtener_bd)):
-  try:  # este bloque de código ejecuta to do lo que se encuentre dentro
-    promotores = db.query(schemas.Promotor).all()  # obtenemos los promotores
-    for promotor in promotores:  # iteramos los promotores
+  try:                                                      # ejecuta to do lo que se encuentre dentro si no hay errores
+    promotores = db.query(schemas.Promotor).all()           # obtenemos los promotores
+    for promotor in promotores:                             # iteramos los promotores
 
-      # lo que está dentro de filter, es literalmente esta sentencia: WHERE usuario = "usuario" AND contra = "contra"
-      usuario_login = db.query(schemas.Promotor).filter(usuario.usuario == promotor.usuario and
-                                                        usuario.contra == promotor.contra).first()
-    if usuario_login is None:  # si no conseguimos al usuario
-      return {"confirmado": "no"}  # no estara confirmado
+      usuario_login = db.query(schemas.Promotor)\
+        .filter(usuario.usuario == promotor.usuario         # filter = WHERE usuario = "usuario" AND contra = "contra"
+                and usuario.contra == promotor.contra)\
+        .first()                                            # arrojamos la primera coincidencia
+
+    if usuario_login is None:                               # si no conseguimos al usuario
+      return {"confirmado": "no"}                           # no estará confirmado
     else:  # de lo contrario
-      return {"confirmado": "si"}  # estará confirmado
-  except Exception as e:  # si al ejecutar algo sucede un error o excepcion, se ejecutara esto
+      return {"confirmado": "si"}                           # estará confirmado
+  except Exception as e:                                    # si sucede un error o excepción, se ejecutará esto
     raise HTTPException(400, str(e))
 
 
@@ -221,11 +224,32 @@ def borrar_empleado(db: Session = Depends(obtener_bd)):
 
 @app.post("/asignar/{empleadoId}/{proyectoId}")
 def asignar_proyecto(proyecto_asignar: model.EmpleadoProyecto = Body(...), db: Session = Depends(obtener_bd)):
-  # asigna un empleado a un proyecto
-  return
+  respuesta: dict
+  try:
+    empleado_asignado = schemas.EmpleadoProyectos(**proyecto_asignar.dict())  # creamos al nuevo promotor
+    db.add(empleado_asignado)  # mismo que función anterior
+    db.commit()
+
+    asignacion = db.query(schemas.EmpleadoProyectos)\
+      .join(schemas.Empleado).filter(schemas.EmpleadoProyectos.cedula_empleado == schemas.Empleado.cedula)\
+      .join(schemas.Proyectos).filter(schemas.EmpleadoProyectos.codigo_proyecto == schemas.Proyectos.codigo)
+    
+    for empleado, proyecto in asignacion:
+      respuesta["proyecto"] += proyecto
+      respuesta["empleado"] += empleado
+
+    return {"estado": "exitoso", "asignacion": respuesta}
+  except Exception as e:
+    raise HTTPException(400, str(e))
 
 
 @app.post("/asignar/{empleadoId}/{tareaId}")
 def asignar_tarea(tarea_asignar: model.EmpleadoTareas = Body(...), db: Session = Depends(obtener_bd)):
-  # asigna un empleado a una tarea
-  return
+  try:
+    empleado_asignado = schemas.EmpleadoTareas(**tarea_asignar.dict())  # creamos al nuevo promotor
+    db.add(empleado_asignado)  # mismo que función anterior
+    db.commit()
+
+    return {"estado": "exitoso", "asignacion": empleado_asignado}
+  except Exception as e:
+    raise HTTPException(400, str(e))

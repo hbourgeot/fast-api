@@ -62,3 +62,10 @@ class EmpleadoTareas(Base):
   id = Column(Integer, primary_key=True)
   codigo_tarea = Column(ForeignKey("tareas.codigo"))      # foreign key
   cedula_empleado = Column(ForeignKey("empleado.cedula"))
+
+
+class EmpleadoProyectos(Base):
+  __tablename__ = "empleado_proyectos"
+  id = Column(Integer, primary_key=True)
+  codigo_proyecto = Column(ForeignKey("proyecto.codigo"))      # foreign key
+  cedula_empleado = Column(ForeignKey("empleado.cedula"))
