@@ -29,6 +29,7 @@ Base.metadata.create_all(bind=engine)
 # TODO DONE 11/1/2023: login, crear_empleado, crear_promotor
 # TODO DONE 12/1/2023: terminadas rutas POST simples :D
 # TODO DONE 13/1/2023: adelantadas rutas de asignacion de proyectos y tareas
+# TODO DONE 14/1/2023: añadidas algunas funciones GET
 
 # Abrimos la conexion con la base de datos
 
