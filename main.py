@@ -64,22 +64,34 @@ def agregar_proyecto(proyecto: model.Proyectos = Body(...), db: Session = Depend
     raise HTTPException(400, str(e))
 
 
-@app.patch("/modificar/proyecto")
+@app.put("/modificar/proyecto/{proyecto_id}")
+def actualizar_proyecto(db: Session = Depends(obtener_bd)):
+  # modifica un proyecto
+  return {"proyectos": "Not finished"}
+
+@app.patch("/modificar/proyecto/{proyecto_id}")
 def modificar_proyecto(db: Session = Depends(obtener_bd)):
   # modifica un proyecto
   return {"proyectos": "Not finished"}
 
 
-@app.delete("/borrar/proyecto")
+@app.delete("/borrar/proyecto/{proyecto_id}")
 def borrar_proyecto(db: Session = Depends(obtener_bd)):
   # borra un proyecto
   return {"proyectos": "Not finished"}
 
 
-@app.get("/proyecto/{proyectoId}")
-def mostrar_proyecto(db: Session = Depends(obtener_bd)):
-  # TODO: mostrar cada proyecto
-  return {"proyectos": "Not finished"}
+@app.get("/proyecto/{proyecto_id}")
+def mostrar_proyecto(proyecto_id: str, db: Session = Depends(obtener_bd)):
+  try:
+    proyecto = db.query(schemas.Proyectos).get(proyecto_id)  # SELECT * FROM proyectos WHERE codigo = proyecto_id
+
+    if proyecto is None:
+      return {"detail": "El producto no existe"}
+
+    return {"proyecto":proyecto}
+  except Exception as e:
+    raise HTTPException(400,str(e))
 
 
 # Operaciones de tareas
@@ -115,10 +127,17 @@ def borrar_tarea(db: Session = Depends(obtener_bd)):
   return
 
 
-@app.get("/tarea/{tareaId}")
-def mostrar_tarea(db: Session = Depends(obtener_bd)):
-  # muestra una tarea
-  return
+@app.get("/tarea/{tarea_id}")
+def mostrar_tarea(tarea_id: int, db: Session = Depends(obtener_bd)):
+  try:
+    tarea = db.query(schemas.Tareas).get(tarea_id)
+
+    if tarea is None:
+      return {"detail": "La rarea no existe"}
+
+    return {"tarea": tarea}
+  except Exception as e:
+    raise HTTPException(400, str(e))
 
 
 # Operaciones de documentos asociados a cierta tarea
@@ -157,11 +176,17 @@ def obtener_empleados(db: Session = Depends(obtener_bd)):
   return
 
 
-@app.get("/empleado/{empleadoId}")
-def obtener_empleado(db: Session = Depends(obtener_bd)):
-  # obtiene un empleado
-  return
+@app.get("/empleado/{empleado_id}")
+def obtener_empleado(empleado_id: int, db: Session = Depends(obtener_bd)):
+  try:
+    empleado = db.query(schemas.Empleado).get(empleado_id)
 
+    if empleado is None:
+      return {"detail": "El producto no existe"}
+
+    return {"empleado":empleado}
+  except Exception as e:
+    raise HTTPException(400,str(e))
 
 @app.post("/nuevo/empleado")
 def crear_empleado(empleado: model.Empleado = Body(...), db: Session = Depends(obtener_bd)):
@@ -233,7 +258,7 @@ def asignar_proyecto(proyecto_asignar: model.EmpleadoProyecto = Body(...), db: S
     asignacion = db.query(schemas.EmpleadoProyectos)\
       .join(schemas.Empleado).filter(schemas.EmpleadoProyectos.cedula_empleado == schemas.Empleado.cedula)\
       .join(schemas.Proyectos).filter(schemas.EmpleadoProyectos.codigo_proyecto == schemas.Proyectos.codigo)
-    
+
     for empleado, proyecto in asignacion:
       respuesta["proyecto"] += proyecto
       respuesta["empleado"] += empleado
@@ -245,11 +270,20 @@ def asignar_proyecto(proyecto_asignar: model.EmpleadoProyecto = Body(...), db: S
 
 @app.post("/asignar/{empleadoId}/{tareaId}")
 def asignar_tarea(tarea_asignar: model.EmpleadoTareas = Body(...), db: Session = Depends(obtener_bd)):
+  respuesta: dict
   try:
-    empleado_asignado = schemas.EmpleadoTareas(**tarea_asignar.dict())  # creamos al nuevo promotor
+    empleado_asignado = schemas.EmpleadoProyectos(**tarea_asignar.dict())  # creamos al nuevo promotor
     db.add(empleado_asignado)  # mismo que función anterior
     db.commit()
 
-    return {"estado": "exitoso", "asignacion": empleado_asignado}
+    asignacion = db.query(schemas.EmpleadoProyectos) \
+      .join(schemas.Empleado).filter(schemas.EmpleadoProyectos.cedula_empleado == schemas.Empleado.cedula) \
+      .join(schemas.Proyectos).filter(schemas.EmpleadoProyectos.codigo_proyecto == schemas.Proyectos.codigo)
+
+    for empleado, proyecto in asignacion:
+      respuesta["proyecto"] += proyecto
+      respuesta["empleado"] += empleado
+
+    return {"estado": "exitoso", "asignacion": respuesta}
   except Exception as e:
     raise HTTPException(400, str(e))
