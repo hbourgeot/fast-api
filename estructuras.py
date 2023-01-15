@@ -61,15 +61,19 @@ class Lista:
 
   # Método para imprimir la lista enlazada
 
-  def print_list(self):
+  def retornar_datos(self):
 
     nodo = self.cbza
+    datos = []
+
     while nodo is not None:
-      print(nodo.dato, end=" => ")
+      datos.append(nodo.dato)
       nodo = nodo.sgte
 
+    return datos
 
 # Pilas
+
 
 class Pila:
 
@@ -85,7 +89,7 @@ class Pila:
       return
 
     nuevo_nodo = Nodo(dato)
-    nuevo_nodo.siguiente = self.superior
+    nuevo_nodo.sgte = self.superior
     self.superior = nuevo_nodo
 
   def desapilar(self):
@@ -96,16 +100,16 @@ class Pila:
       return
 
     print(f"Desapilar {self.superior.dato}")
-    self.superior = self.superior.siguiente
+    self.superior = self.superior.sgte
 
-  def imprimir(self):
-    print("Imprimiendo pila:")
+  def retornar_datos(self):
 
     # Recorrer la pila e imprimir valores
     nodo_temporal = self.superior
+    datos = []
 
     while nodo_temporal is not None:
-      print(f"{nodo_temporal.dato}", end=",")
-      nodo_temporal = nodo_temporal.siguiente
+      datos.append(nodo_temporal.dato)
+      nodo_temporal = nodo_temporal.sgte
 
-    print("")
+    return datos
