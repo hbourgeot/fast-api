@@ -1,6 +1,7 @@
 # Database
 import schemas
 from database import SesionLocal, engine, Base
+from estructuras import Lista, Pila
 import model
 
 # FastAPI
@@ -30,6 +31,7 @@ Base.metadata.create_all(bind=engine)
 # TODO DONE 12/1/2023: terminadas rutas POST simples :D
 # TODO DONE 13/1/2023: adelantadas rutas de asignacion de proyectos y tareas
 # TODO DONE 14/1/2023: añadidas algunas funciones GET
+# TODO DONE 15/1/2023: añadido uso de estructuras de datos y GET de varios registros :3
 
 # Abrimos la conexion con la base de datos
 
@@ -49,7 +51,21 @@ def obtener_bd():
 
 @app.get("/proyectos")
 def mostrar_proyectos(db: Session = Depends(obtener_bd)):
-  return {"proyectos": "Not finished"}
+  try:
+    # definimos una lista
+    proyectos_lista = Lista()
+
+    # obtenemos los datos de la bd
+    proyectos = db.query(schemas.Proyectos).all()
+
+    for proyecto in proyectos:  # iteramos el objeto
+      proyectos_lista.agregar_final(proyecto.nombre)  # empujamos por atrás el nombre
+
+    respuesta = proyectos_lista.retornar_datos()  # retornamos los datos de la lista
+
+    return {"cantidad":len(respuesta),"proyectos":respuesta}
+  except Exception as e:
+    raise HTTPException(400, str(e))
 
 
 @app.post("/crear/proyecto")
@@ -69,6 +85,7 @@ def agregar_proyecto(proyecto: model.Proyectos = Body(...), db: Session = Depend
 def actualizar_proyecto(db: Session = Depends(obtener_bd)):
   # modifica un proyecto
   return {"proyectos": "Not finished"}
+
 
 @app.patch("/modificar/proyecto/{proyecto_id}")
 def modificar_proyecto(db: Session = Depends(obtener_bd)):
@@ -97,10 +114,21 @@ def mostrar_proyecto(proyecto_id: str, db: Session = Depends(obtener_bd)):
 
 # Operaciones de tareas
 
+
 @app.get("/tareas")
 def mostrar_tareas(db: Session = Depends(obtener_bd)):
-  # muestra las tareas
-  return
+  try:
+    tareas_lista = Lista()
+    tareas = db.query(schemas.Tareas).all()
+
+    for tarea in tareas:
+      tareas_lista.agregar_final(tarea.descripcion)
+
+    respuesta = tareas_lista.retornar_datos()
+
+    return {"cantidad": len(respuesta), "tareas": respuesta}
+  except Exception as e:
+    raise HTTPException(400, str(e))
 
 
 @app.post("/crear/tarea")
@@ -143,6 +171,7 @@ def mostrar_tarea(tarea_id: int, db: Session = Depends(obtener_bd)):
 
 # Operaciones de documentos asociados a cierta tarea
 
+
 @app.get("/tarea/{tareaId}/documentos")
 def docs_tarea(db: Session = Depends(obtener_bd)):
   # muestra las distintas versiones de los documentos de una tarea
@@ -173,8 +202,18 @@ def modificar_documento(db: Session = Depends(obtener_bd)):
 
 @app.get("/empleados")
 def obtener_empleados(db: Session = Depends(obtener_bd)):
-  # obtiene un empleado
-  return
+  try:
+    empleados_pila = Pila()
+    empleados = db.query(schemas.Empleado).all()
+
+    for empleado in empleados:
+      empleados_pila.apilar(f"{empleado.nombre.title()} {empleado.apellido.title()}")
+
+    respuesta = empleados_pila.retornar_datos()
+
+    return {"cantidad": len(respuesta), "proyectos": respuesta}
+  except Exception as e:
+    raise HTTPException(400, str(e))
 
 
 @app.get("/empleado/{empleado_id}")
@@ -188,6 +227,7 @@ def obtener_empleado(empleado_id: int, db: Session = Depends(obtener_bd)):
     return {"empleado":empleado}
   except Exception as e:
     raise HTTPException(400,str(e))
+
 
 @app.post("/nuevo/empleado")
 def crear_empleado(empleado: model.Empleado = Body(...), db: Session = Depends(obtener_bd)):
@@ -256,11 +296,11 @@ def asignar_proyecto(proyecto_asignar: model.EmpleadoProyecto = Body(...), db: S
     db.add(empleado_asignado)  # mismo que función anterior
     db.commit()
 
-    asignacion = db.query(schemas.EmpleadoProyectos)\
+    asignacion_proyecto = db.query(schemas.EmpleadoProyectos)\
       .join(schemas.Empleado).filter(schemas.EmpleadoProyectos.cedula_empleado == schemas.Empleado.cedula)\
       .join(schemas.Proyectos).filter(schemas.EmpleadoProyectos.codigo_proyecto == schemas.Proyectos.codigo)
 
-    for empleado, proyecto in asignacion:
+    for empleado, proyecto in asignacion_proyecto:
       respuesta["proyecto"] += proyecto
       respuesta["empleado"] += empleado
 
@@ -277,11 +317,11 @@ def asignar_tarea(tarea_asignar: model.EmpleadoTareas = Body(...), db: Session =
     db.add(empleado_asignado)  # mismo que función anterior
     db.commit()
 
-    asignacion = db.query(schemas.EmpleadoProyectos) \
+    asignacion_tarea = db.query(schemas.EmpleadoProyectos) \
       .join(schemas.Empleado).filter(schemas.EmpleadoProyectos.cedula_empleado == schemas.Empleado.cedula) \
       .join(schemas.Proyectos).filter(schemas.EmpleadoProyectos.codigo_proyecto == schemas.Proyectos.codigo)
 
-    for empleado, proyecto in asignacion:
+    for empleado, proyecto in asignacion_tarea:
       respuesta["proyecto"] += proyecto
       respuesta["empleado"] += empleado
 

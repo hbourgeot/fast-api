@@ -42,6 +42,7 @@ class Tareas(Base):
 
 
 class Documentos(Base):
+  __tablename__ = "documentos"
   codigo = Column(Integer, primary_key=True)
   documento_especificacion = Column(String(60))
   codigo_fuente = Column(Integer)
@@ -51,6 +52,7 @@ class Documentos(Base):
 
 
 class Version(Base):
+  __tablename__ = "version"
   codigo = Column(Integer, primary_key=True)
   fecha = Column(Date)
   descripcion = Column(String(60))
