@@ -49,6 +49,118 @@ def obtener_bd():
 # Operaciones de proyectos
 
 
+@app.get("/")
+def home():
+  return {"estructura de la API": {
+      "/proyectos": {
+        "descripcion": "muestra todos los proyectos",
+        "metodo": "GET",
+        "terminado": "si"
+      },
+      "/crear/proyecto": {
+        "descripcion": "crea un nuevo proyecto",
+        "metodo": "POST",
+        "terminado": "si"
+      },
+      "/modificar/proyecto/{proyecto_id}": {
+        "descripcion": "actualiza un proyecto existente",
+        "metodo": "PUT",
+        "terminado": "no"
+      },
+      "/borrar/proyecto/{proyecto_id}": {
+        "descripcion": "borra un proyecto existente",
+        "metodo": "DELETE",
+        "terminado": "no"
+      },
+      "/proyecto/{proyecto_id}": {
+        "descripcion": "muestra un proyecto existente",
+        "metodo": "GET",
+        "terminado": "si"
+      },
+      "/tareas": {
+        "descripcion": "muestra todas las tareas",
+        "metodo": "GET",
+        "terminado": "si"
+      },
+      "/crear/tarea": {
+        "descripcion": "crea una nueva tarea",
+        "metodo": "POST",
+        "terminado": "si"
+      },
+      "/modificar/tarea/{tarea_id}": {
+        "descripcion": "actualiza una tarea existente",
+        "metodo": "PUT",
+        "terminado": "no"
+      },
+      "/borrar/tarea/{tarea_id}": {
+        "descripcion": "borra una tarea",
+        "metodo": "DELETE",
+        "terminado": "no"
+      },
+      "/tarea/{tarea_id}": {
+        "descripcion": "muestra una tarea",
+        "metodo": "GET",
+        "terminado": "si"
+      },
+      "/tareas/{tarea_id}/documentos": {
+        "descripcion": "muestra los documentos asociados a cada tarea",
+        "metodo": "GET",
+        "terminado": "no"
+      },
+      "/tareas/{tarea_id}/crear/documento": {
+        "descripcion": "muestra los documentos asociados a cada tarea",
+        "metodo": "POST",
+        "terminado": "no"
+      },
+      "/tareas/{tarea_id}/modificar/documento/{documento_id}": {
+        "descripcion": "actualiza un documento",
+        "metodo": "PUT",
+        "terminado": "no"
+      },
+      "/empleados": {
+        "descripcion": "muestra todos los empleados",
+        "metodo": "GET",
+        "terminado": "si"
+      },
+      "/empleado/{empleado_id}": {
+        "descripcion": "muestra un empleados",
+        "metodo": "GET",
+        "terminado": "si"
+      },
+      "/crear/empleado": {
+        "descripcion": "crea un empleado",
+          "metodo": "POST",
+        "terminado": "si"
+      },
+      "/crear/promotor": {
+        "descripcion": "crea un promotor",
+          "metodo": "POST",
+        "terminado": "si"
+      },
+      "/modificar/empleado/{empleado_id}": {
+        "descripcion": "modifica un empleado",
+        "metodo": "PUT",
+        "terminado": "no"
+      },
+      "/borrar/empleado/{empleado_id}": {
+        "descripcion": "elimina un empleado",
+        "metodo": "DELETE",
+        "terminado": "no"
+      },
+      "/asignar/proyecto/{empleado_id}/{proyecto_id}": {
+        "descripcion": "asigna un empleado a un proyecto",
+        "metodo": "POST",
+        "terminado": "si"
+      },
+      "/asignar/tarea/{empleado_id}/{tarea_id}": {
+        "descripcion": "asigna un empleado a una tarea",
+        "metodo": "POST",
+        "terminado": "si"
+      },
+   }
+  }
+
+
 @app.get("/proyectos")
 def mostrar_proyectos(db: Session = Depends(obtener_bd)):
   try:
@@ -87,12 +199,6 @@ def actualizar_proyecto(db: Session = Depends(obtener_bd)):
   return {"proyectos": "Not finished"}
 
 
-@app.patch("/modificar/proyecto/{proyecto_id}")
-def modificar_proyecto(db: Session = Depends(obtener_bd)):
-  # modifica un proyecto
-  return {"proyectos": "Not finished"}
-
-
 @app.delete("/borrar/proyecto/{proyecto_id}")
 def borrar_proyecto(db: Session = Depends(obtener_bd)):
   # borra un proyecto
@@ -110,7 +216,6 @@ def mostrar_proyecto(proyecto_id: str, db: Session = Depends(obtener_bd)):
     return {"proyecto":proyecto}
   except Exception as e:
     raise HTTPException(400,str(e))
-
 
 # Operaciones de tareas
 
@@ -144,13 +249,13 @@ def agregar_tarea(tarea: model.Tareas = Body(...), db: Session = Depends(obtener
     raise HTTPException(400, str(e))
 
 
-@app.patch("/modificar/tarea")
+@app.put("/modificar/tarea{tarea_id}")
 def modificar_tarea(db: Session = Depends(obtener_bd)):
   # modifica una tarea
   return
 
 
-@app.delete("/borrar/tarea")
+@app.delete("/borrar/tarea{tarea_id}")
 def borrar_tarea(db: Session = Depends(obtener_bd)):
   # borra una tarea
   return
@@ -167,7 +272,6 @@ def mostrar_tarea(tarea_id: int, db: Session = Depends(obtener_bd)):
     return {"tarea": tarea}
   except Exception as e:
     raise HTTPException(400, str(e))
-
 
 # Operaciones de documentos asociados a cierta tarea
 
@@ -288,7 +392,7 @@ def borrar_empleado(db: Session = Depends(obtener_bd)):
 # Asignaciones
 
 
-@app.post("/asignar/{empleadoId}/{proyectoId}")
+@app.post("/asignar/tarea/{empleadoId}/{proyectoId}")
 def asignar_proyecto(proyecto_asignar: model.EmpleadoProyecto = Body(...), db: Session = Depends(obtener_bd)):
   respuesta: dict
   try:
@@ -309,7 +413,7 @@ def asignar_proyecto(proyecto_asignar: model.EmpleadoProyecto = Body(...), db: S
     raise HTTPException(400, str(e))
 
 
-@app.post("/asignar/{empleadoId}/{tareaId}")
+@app.post("/asignar/proyecto/{empleadoId}/{tareaId}")
 def asignar_tarea(tarea_asignar: model.EmpleadoTareas = Body(...), db: Session = Depends(obtener_bd)):
   respuesta: dict
   try:
