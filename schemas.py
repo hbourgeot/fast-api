@@ -1,5 +1,6 @@
 from database import Base
 from sqlalchemy import Column, ForeignKey
+from sqlalchemy.orm import relationship
 from sqlalchemy.types import Integer, Date, String, Time, Text
 
 
@@ -28,6 +29,7 @@ class Proyectos(Base):
   nombre = Column(String(60))
   denominacion_comercial = Column(String(60))
   estado_actual = Column(String(60))
+  empleado_proyecto = relationship("EmpleadoProyectos")
 
 
 class Tareas(Base):
@@ -69,5 +71,6 @@ class EmpleadoTareas(Base):
 class EmpleadoProyectos(Base):
   __tablename__ = "empleado_proyectos"
   id = Column(Integer, primary_key=True)
-  codigo_proyecto = Column(ForeignKey("proyecto.codigo"))      # foreign key
-  cedula_empleado = Column(ForeignKey("empleado.cedula"))
+  codigo_proyecto = Column(Integer, ForeignKey("proyectos.codigo"))
+  cedula_empleado = Column(Integer, ForeignKey("empleado.cedula"))
+  empleado = relationship("Empleado")

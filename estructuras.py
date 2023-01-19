@@ -35,30 +35,6 @@ class Lista:
 
     actual.sgte = Nodo(dato=dato)
 
-  # Método para eliminar nodos
-  def borrar_nodo(self, key):
-
-    actual = self.cbza
-    prev = None
-
-    while actual and actual.dato != key:
-      prev = actual
-      actual = actual.sgte
-
-    if prev is None:
-      self.cbza = actual.sgte
-    elif actual:
-      prev.sgte = actual.sgte
-      actual.sgte = None
-
-  # Método para obtener el ultimo nodo
-
-  def obtener_ultimo_nodo(self):
-    temp = self.cbza
-    while temp.sgte is not None:
-      temp = temp.sgte
-    return temp.dato
-
   # Método para imprimir la lista enlazada
 
   def retornar_datos(self):
@@ -81,7 +57,6 @@ class Pila:
     self.superior = None
 
   def apilar(self, dato):
-    print(f"Agregando {dato} en la cima de la pila")
 
     # Si no hay datos, agregamos el valor en el elemento superior y regresamos
     if self.superior is None:

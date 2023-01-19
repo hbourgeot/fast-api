@@ -9,6 +9,7 @@ from fastapi import FastAPI, Depends, Body
 from fastapi.exceptions import HTTPException
 # SQLAlchemy
 from sqlalchemy.orm import Session
+from sqlalchemy import select
 
 app = FastAPI()
 
@@ -174,6 +175,8 @@ def mostrar_proyectos(db: Session = Depends(obtener_bd)):
       proyectos_lista.agregar_final(proyecto.nombre)  # empujamos por atrás el nombre
 
     respuesta = proyectos_lista.retornar_datos()  # retornamos los datos de la lista
+
+    del proyectos_lista  # borramos la variable para liberar memoria
 
     return {"cantidad": len(respuesta), "proyectos": respuesta}
   except Exception as e:
@@ -393,43 +396,35 @@ def borrar_empleado(db: Session = Depends(obtener_bd)):
 # Asignaciones
 
 
-@app.post("/asignar/tarea/{empleadoId}/{proyectoId}")
-def asignar_proyecto(proyecto_asignar: model.EmpleadoProyecto = Body(...), db: Session = Depends(obtener_bd)):
+@app.post("/asignar/tarea")
+def asignar_proyecto(tarea_asignar: model.EmpleadoTareas = Body(...), db: Session = Depends(obtener_bd)):
+  try:
+    empleado_asignado = schemas.EmpleadoTareas(**tarea_asignar.dict())  # creamos al nuevo promotor
+    db.add(empleado_asignado)  # mismo que función anterior
+    db.commit()
+
+    asignacion = db.query(schemas.Tareas, schemas.Empleado) \
+      .join(schemas.EmpleadoTareas, schemas.Empleado.cedula == schemas.EmpleadoTareas.cedula_empleado
+            and schemas.Tareas.codigo == schemas.EmpleadoTareas.codigo_tarea) \
+      .filter(schemas.EmpleadoTareas.id == empleado_asignado.id).all()
+
+    return {"estado": "exitoso", "asignacion": asignacion}
+  except Exception as e:
+    raise HTTPException(400, str(e))
+
+
+@app.post("/asignar/proyecto")
+def asignar_tarea(proyecto_asignar: model.EmpleadoProyecto = Body(...), db: Session = Depends(obtener_bd)):
   try:
     empleado_asignado = schemas.EmpleadoProyectos(**proyecto_asignar.dict())  # creamos al nuevo promotor
     db.add(empleado_asignado)  # mismo que función anterior
     db.commit()
 
-    respuesta_tarea: dict
-    asignacion_proyecto = db.query(schemas.EmpleadoProyectos)\
-      .join(schemas.Empleado).filter(schemas.EmpleadoProyectos.cedula_empleado == schemas.Empleado.cedula)\
-      .join(schemas.Proyectos).filter(schemas.EmpleadoProyectos.codigo_proyecto == schemas.Proyectos.codigo)
+    asignacion = db.query(schemas.Proyectos, schemas.Empleado)\
+      .join(schemas.EmpleadoProyectos, schemas.Empleado.cedula == schemas.EmpleadoProyectos.cedula_empleado
+            and schemas.Proyectos.codigo == schemas.EmpleadoProyectos.codigo_proyecto)\
+      .filter(schemas.EmpleadoProyectos.id == empleado_asignado.id).all()
 
-    for empleado, proyecto in asignacion_proyecto:
-      respuesta_tarea["proyecto"] += proyecto
-      respuesta_tarea["empleado"] += empleado
-
-    return {"estado": "exitoso", "asignacion": respuesta_tarea}
-  except Exception as e:
-    raise HTTPException(400, str(e))
-
-
-@app.post("/asignar/proyecto/{empleadoId}/{tareaId}")
-def asignar_tarea(tarea_asignar: model.EmpleadoTareas = Body(...), db: Session = Depends(obtener_bd)):
-  try:
-    empleado_asignado = schemas.EmpleadoProyectos(**tarea_asignar.dict())  # creamos al nuevo promotor
-    db.add(empleado_asignado)  # mismo que función anterior
-    db.commit()
-
-    respuesta_proyecto: dict
-    asignacion_tarea = db.query(schemas.EmpleadoProyectos) \
-      .join(schemas.Empleado).filter(schemas.EmpleadoProyectos.cedula_empleado == schemas.Empleado.cedula) \
-      .join(schemas.Proyectos).filter(schemas.EmpleadoProyectos.codigo_proyecto == schemas.Proyectos.codigo)
-
-    for empleado, proyecto in asignacion_tarea:
-      respuesta_proyecto["proyecto"] += proyecto
-      respuesta_proyecto["empleado"] += empleado
-
-    return {"estado": "exitoso", "asignacion": respuesta_proyecto}
+    return {"estado": "exitoso", "asignacion": asignacion}
   except Exception as e:
     raise HTTPException(400, str(e))
