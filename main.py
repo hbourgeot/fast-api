@@ -27,7 +27,14 @@ Base.metadata.create_all(bind=engine)
   ¿Y qué son estos? son los métodos de HTTP, recomiendo que lean más acerca de ellos
 """
 
-# TODO: continuar el crud de empleado
+# TODO: CREAR NUEVAS RUTAS (Luis)
+# TODO: ELIMINA RUTAS ASOCIADAS A LOS DOCUMENTOS DE UNA TAREA
+# TODO: "/proyecto/{proyecto_id}/empleados/" EMPLEADOS DE UN PROYECTO
+# TODO: "/tarea/{tarea_id}/empleados/" EMPLEADOS DE UNA TAREA
+# TODO: "/proyecto/{proyecto_id/}/tareas" TAREAS DE UN PROYECTO
+# TODO: "/proyecto/{proyecto_id/crear/tarea/" CREAR UNA TAREA ASOCIADA A CIERTO PROYECTO
+# TODO: "/proyecto/{proyecto_id/tarea/{tarea_id}" RUTA GET, PUT Y DELETE DE UNA TAREA
+# TODO: "/proyecto/{proyecto_id/tarea/{tarea_id}/docs" RUTA GET, POST, PUT Y DELETE DE UN DOCUMENTO ASOCIADO A UNA TAREA
 # TODO DONE 11/1/2023: login, crear_empleado, crear_promotor
 # TODO DONE 12/1/2023: terminadas rutas POST simples :D
 # TODO DONE 13/1/2023: adelantadas rutas de asignacion de proyectos y tareas
