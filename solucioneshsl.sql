@@ -30,7 +30,7 @@ CREATE TABLE `proyectos` (
   PRIMARY KEY (`codigo`),
   UNIQUE KEY `nombre` (`nombre`),
   UNIQUE KEY `denominacion_comercial` (`denominacion_comercial`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -87,7 +87,7 @@ CREATE TABLE `tareas` (
   `codigo_proyecto` INT NOT NULL,
   PRIMARY KEY (`codigo`),
   FOREIGN KEY (`codigo_proyecto`) REFERENCES proyectos(`codigo`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -143,7 +143,7 @@ CREATE TABLE `documentos` (
   PRIMARY KEY (`codigo`),
   KEY `codigo_tareas` (`codigo_tareas`),
   CONSTRAINT `documentos_ibfk_1` FOREIGN KEY (`codigo_tareas`) REFERENCES `tareas` (`codigo`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -197,7 +197,7 @@ CREATE TABLE `version` (
   PRIMARY KEY (`codigo`),
   KEY `codigo_documentos` (`codigo_documentos`),
   CONSTRAINT `version_ibfk_1` FOREIGN KEY (`codigo_documentos`) REFERENCES `documentos` (`codigo`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -252,7 +252,7 @@ CREATE TABLE `empleado` (
   `telefono` varchar(22) DEFAULT NULL,
   `fecha_contratacion` datetime NOT NULL,
   PRIMARY KEY (`cedula`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -308,7 +308,7 @@ CREATE TABLE `empleado_proyectos` (
   KEY `cedula_empleado` (`cedula_empleado`),
   CONSTRAINT `empleado_proyectos_ibfk_1` FOREIGN KEY (`codigo_proyecto`) REFERENCES `proyectos` (`codigo`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `empleado_proyectos_ibfk_2` FOREIGN KEY (`cedula_empleado`) REFERENCES `empleado` (`cedula`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -363,7 +363,7 @@ CREATE TABLE `empleado_tareas` (
   KEY `codigo_tareas` (`codigo_tareas`),
   CONSTRAINT `empleado_tareas_ibfk_1` FOREIGN KEY (`cedula_empleado`) REFERENCES `empleado` (`cedula`),
   CONSTRAINT `empleado_tareas_ibfk_2` FOREIGN KEY (`codigo_tareas`) REFERENCES `tareas` (`codigo`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -418,7 +418,7 @@ CREATE TABLE `promotor_proyecto` (
   KEY `codigo_proyecto` (`codigo_proyecto`),
   CONSTRAINT `promotor_proyecto_ibfk_1` FOREIGN KEY (`cedula_empleado`) REFERENCES `empleado` (`cedula`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `promotor_proyecto_ibfk_2` FOREIGN KEY (`codigo_proyecto`) REFERENCES `proyectos` (`codigo`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
