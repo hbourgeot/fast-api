@@ -16,12 +16,12 @@ app = FastAPI()
 Base.metadata.create_all(bind=engine)
 
 """
-  ¿Qué es GET, POST, PUT Y DELETE?
+  ¿Qué es GET, POST, patch Y DELETE?
 
   GET = Obtener
   POST = Crear
   PATCH = Actualizar parcialmente
-  PUT = actualizar algo completamente
+  patch = actualizar algo completamente
   DELETE = Borrar
 
   ¿Y qué son estos? son los métodos de HTTP, recomiendo que lean más acerca de ellos
@@ -33,8 +33,8 @@ Base.metadata.create_all(bind=engine)
 # TODO: "/tarea/{tarea_id}/empleados/" EMPLEADOS DE UNA TAREA
 # TODO: "/proyecto/{proyecto_id/}/tareas" TAREAS DE UN PROYECTO
 # TODO: "/proyecto/{proyecto_id/crear/tarea/" CREAR UNA TAREA ASOCIADA A CIERTO PROYECTO
-# TODO: "/proyecto/{proyecto_id/tarea/{tarea_id}" RUTA GET, PUT Y DELETE DE UNA TAREA
-# TODO: "/proyecto/{proyecto_id/tarea/{tarea_id}/docs" RUTA GET, POST, PUT Y DELETE DE UN DOCUMENTO ASOCIADO A UNA TAREA
+# TODO: "/proyecto/{proyecto_id/tarea/{tarea_id}" RUTA GET, patch Y DELETE DE UNA TAREA
+# TODO: "/proyecto/{proyecto_id/tarea/{tarea_id}/docs" RUTA GET, POST, patch Y DELETE DE UN DOCUMENTO ASOCIADO A UNA TAREA
 # TODO DONE 11/1/2023: login, crear_empleado, crear_promotor
 # TODO DONE 12/1/2023: terminadas rutas POST simples :D
 # TODO DONE 13/1/2023: adelantadas rutas de asignacion de proyectos y tareas
@@ -72,7 +72,7 @@ def home():
       },
       "/modificar/proyecto/{proyecto_id}": {
         "descripcion": "actualiza un proyecto existente",
-        "metodo": "PUT",
+        "metodo": "patch",
         "terminado": "no"
       },
       "/borrar/proyecto/{proyecto_id}": {
@@ -97,7 +97,7 @@ def home():
       },
       "/modificar/tarea/{tarea_id}": {
         "descripcion": "actualiza una tarea existente",
-        "metodo": "PUT",
+        "metodo": "patch",
         "terminado": "no"
       },
       "/borrar/tarea/{tarea_id}": {
@@ -122,7 +122,7 @@ def home():
       },
       "/tareas/{tarea_id}/modificar/documento/{documento_id}": {
         "descripcion": "actualiza un documento",
-        "metodo": "PUT",
+        "metodo": "patch",
         "terminado": "no"
       },
       "/empleados": {
@@ -147,7 +147,7 @@ def home():
       },
       "/modificar/empleado/{empleado_id}": {
         "descripcion": "modifica un empleado",
-        "metodo": "PUT",
+        "metodo": "patch",
         "terminado": "no"
       },
       "/borrar/empleado/{empleado_id}": {
@@ -203,16 +203,36 @@ def agregar_proyecto(proyecto: model.Proyectos = Body(...), db: Session = Depend
     raise HTTPException(400, str(e))
 
 
-@app.put("/modificar/proyecto/{proyecto_id}")
-def actualizar_proyecto(db: Session = Depends(obtener_bd)):
-  # modifica un proyecto
-  return {"proyectos": "Not finished"}
+@app.patch("/modificar/proyecto/{proyecto_id}")
+def actualizar_proyecto(proyecto_id: int, proyecto: model.Proyectos = Body(...), db: Session = Depends(obtener_bd)):
+  try:
+    consulta_proyecto = db.query(schemas.Proyectos).filter(schemas.Proyectos.codigo == proyecto_id)
+    db_proyecto = consulta_proyecto.first()
+
+    if not db_proyecto: raise HTTPException(404, "Proyecto no encontrado")
+
+    actualizar = proyecto.dict(exclude_unset=True)
+    consulta_proyecto.filter(schemas.Proyectos.codigo == proyecto_id).update(actualizar, synchronize_session=False)
+    db.commit()
+    db.refresh(db_proyecto)
+
+    return {"estado": "exitoso", "proyecto": db_proyecto}
+  except Exception as e:
+    raise HTTPException(400, str(e))
 
 
 @app.delete("/borrar/proyecto/{proyecto_id}")
-def borrar_proyecto(db: Session = Depends(obtener_bd)):
-  # borra un proyecto
-  return {"proyectos": "Not finished"}
+def borrar_proyecto(proyecto_id: int, db: Session = Depends(obtener_bd)):
+  try:
+    consulta_proyecto = db.query(schemas.Proyectos).filter(schemas.Proyectos.codigo == proyecto_id)
+    proyecto = consulta_proyecto.first()
+    if not proyecto: raise HTTPException(404, "No existe el empleado")
+
+    consulta_proyecto.delete(synchronize_session=False)
+    db.commit()
+    return {"estado": "exitoso"}
+  except Exception as e:
+    raise HTTPException(400, str(e))
 
 
 @app.get("/proyecto/{proyecto_id}")
@@ -230,14 +250,32 @@ def mostrar_proyecto(proyecto_id: int, db: Session = Depends(obtener_bd)):
 # Operaciones de tareas
 
 
-@app.get("/tareas")
-def mostrar_tareas(db: Session = Depends(obtener_bd)):
+@app.get("/proyecto/{proyecto_id}/empleados")
+def empleados_del_proyecto(proyecto_id: int, db: Session = Depends(obtener_bd)):
+  try:
+    empleados_pila = Pila()
+    empleados_proyecto = db.query(schemas.Empleado)\
+      .join(schemas.EmpleadoProyectos, schemas.Empleado.cedula == schemas.EmpleadoProyectos.cedula_empleado
+            and proyecto_id == schemas.EmpleadoProyectos.codigo_proyecto).all()
+
+    for empleado in empleados_proyecto:
+      empleados_pila.apilar(f"{empleado.nombre} {empleado.apellido}")
+
+    respuesta = empleados_pila.retornar_datos()
+
+    return {"cantidad": len(respuesta), "tareas": respuesta}
+  except Exception as e:
+    raise HTTPException(400, str(e))
+
+
+@app.get("/proyecto/{proyecto_id}/tareas")
+def mostrar_tareas(proyecto_id: int, db: Session = Depends(obtener_bd)):
   try:
     tareas_lista = Lista()
-    tareas = db.query(schemas.Tareas).all()
+    tareas = db.query(schemas.Tareas).filter(schemas.Tareas.codigo_proyecto == proyecto_id)
 
     for tarea in tareas:
-      tareas_lista.agregar_final(tarea.descripcion)
+      tareas_lista.agregar_final(tarea)
 
     respuesta = tareas_lista.retornar_datos()
 
@@ -247,34 +285,55 @@ def mostrar_tareas(db: Session = Depends(obtener_bd)):
 
 
 @app.post("/crear/tarea")
-def agregar_tarea(tarea: model.Tareas = Body(...), db: Session = Depends(obtener_bd)):
+def agregar_tarea(proyecto_id: int, tarea: model.Tareas = Body(...), db: Session = Depends(obtener_bd)):
   try:
+    tarea.codigo_proyecto = proyecto_id
     nueva_tarea = schemas.Tareas(**tarea.dict())        # creamos a la nueva tarea
     db.add(nueva_tarea)                                 # lo agregamos a la bd
     db.commit()                                         # confirmamos la inserción
     db.refresh(nueva_tarea)                             # refrescamos los valores en la variable
-
     return {"estado": "exitoso", "tarea": nueva_tarea}  # retornamos al nuevo empleado
   except Exception as e:
     raise HTTPException(400, str(e))
 
 
-@app.put("/modificar/tarea{tarea_id}")
-def modificar_tarea(db: Session = Depends(obtener_bd)):
-  # modifica una tarea
-  return
-
-
-@app.delete("/borrar/tarea{tarea_id}")
-def borrar_tarea(db: Session = Depends(obtener_bd)):
-  # borra una tarea
-  return
-
-
-@app.get("/tarea/{tarea_id}")
-def mostrar_tarea(tarea_id: int, db: Session = Depends(obtener_bd)):
+@app.patch("/tarea/{tarea_id}")
+def modificar_tarea(tarea_id: int, tarea: schemas.Tareas = Body(...), db: Session = Depends(obtener_bd)):
   try:
-    tarea = db.query(schemas.Tareas).get(tarea_id)
+    consulta_tarea = db.query(schemas.Tareas).filter(schemas.Tareas.codigo == tarea_id)
+    db_tarea = consulta_tarea.first()
+
+    if not db_tarea: raise HTTPException(404, "Tarea no encontrada")
+
+    actualizar = tarea.dict(exclude_unset=True)
+    consulta_tarea.filter(schemas.Tareas.codigo == tarea_id).update(actualizar, synchronize_session=False)
+    db.commit()
+    db.refresh(db_tarea)
+
+    return {"estado": "exitoso", "proyecto": db_tarea}
+  except Exception as e:
+    raise HTTPException(400, str(e))
+  return
+
+
+@app.delete("/tarea/{tarea_id}")
+def borrar_tarea(tarea_id: int, db: Session = Depends(obtener_bd)):
+  try:
+    consulta_tarea = db.query(schemas.Tareas).filter(schemas.Tareas.codigo == tarea_id)
+    tarea = consulta_tarea.first()
+    if not tarea: raise HTTPException(404, "No existe la tarea")
+
+    consulta_tarea.delete(synchronize_session=False)
+    db.commit()
+    return {"estado": "exitoso"}
+  except Exception as e:
+    raise HTTPException(400, str(e))
+
+
+@app.get("/proyecto/{proyecto_id}/tarea/{tarea_id}")
+def mostrar_tarea(proyecto_id: int, tarea_id: int, db: Session = Depends(obtener_bd)):
+  try:
+    tarea = db.query(schemas.Tareas).filter(schemas.Proyectos.codigo == proyecto_id).get(tarea_id)
 
     if tarea is None:
       return {"detail": "La tarea no existe"}
@@ -283,17 +342,46 @@ def mostrar_tarea(tarea_id: int, db: Session = Depends(obtener_bd)):
   except Exception as e:
     raise HTTPException(400, str(e))
 
+
+@app.get("/tarea/{tarea_id}/empleados")
+def empleados_del_proyecto(tarea_id: int, db: Session = Depends(obtener_bd)):
+  try:
+    empleados_pila = Pila()
+    empleados_tarea = db.query(schemas.Empleado)\
+      .join(schemas.EmpleadoTareas, schemas.Empleado.cedula == schemas.EmpleadoTareas.cedula_empleado
+            and schemas.Tareas.codigo == schemas.EmpleadoTareas.codigo_tarea)\
+      .filter(schemas.EmpleadoTareas.codigo_tarea == tarea_id).all()
+
+    for empleado in empleados_tarea:
+      empleados_pila.apilar(f"{empleado.nombre} {empleado.apellido}")
+
+    respuesta = empleados_pila.retornar_datos()
+
+    return {"cantidad": len(respuesta), "tareas": respuesta}
+  except Exception as e:
+    raise HTTPException(400, str(e))
+
 # Operaciones de documentos asociados a cierta tarea
 
-
-@app.get("/tarea/{tareaId}/documentos")
+@app.get("/tarea/{tarea_id}/docs")
 def docs_tarea(db: Session = Depends(obtener_bd)):
-  # muestra las distintas versiones de los documentos de una tarea
-  return
+  try:
+    docs_pila = Pila()  # creamos una pila
+    documentos = db.query(schemas.Documentos).all()  # obtenemos todos los registros de empleado
+
+    for documento in documentos:  # iteramos el objeto
+      # apilamos el nombre y el apellido
+      docs_pila.apilar(f"{documento.nombre.title()} {documento.apellido.title()}")
+
+    respuesta = docs_pila.retornar_datos()
+
+    return {"cantidad": len(respuesta), "empleados": respuesta}
+  except Exception as e:
+    raise HTTPException(400, str(e))
 
 
-@app.post("/tarea/{tarea_id}/crear/documento")
-def crear_doc(tarea_id: int, documento: model.Documentos, db: Session = Depends(obtener_bd)):
+@app.post("/proyecto/{proyecto_id}/tarea/{tarea_id}/docs")
+def crear_doc(proyecto_id: int, tarea_id: int, documento: model.Documentos, db: Session = Depends(obtener_bd)):
   try:
     documento.codigo_tarea = tarea_id
     nuevo_doc = schemas.Empleado(**documento.dict())      # creamos al nuevo documento
@@ -301,17 +389,18 @@ def crear_doc(tarea_id: int, documento: model.Documentos, db: Session = Depends(
     db.commit()                                           # confirmamos la inserción
     db.refresh(nuevo_doc)                                 # refrescamos los valores en la variable
 
-    return {"estado": "exitoso", "documento": nuevo_doc}  # retornamos al nuevo empleado
+    version = model.Version()
+    version.codigo_documentos = documento.codigo
+    version.descripcion = documento.descripcion
+    version.codigo = documento.codigo
+    nueva_version = schemas.Version(**version.dict())
+    db.add(nueva_version)
+    db.commit()
+    db.refresh(nuevo_doc)
+
+    return {"estado": "exitoso", "documento": nuevo_doc, "version": nueva_version}  # retornamos al nuevo documento
   except Exception as e:
     raise HTTPException(400, str(e))
-
-
-@app.put("/tarea/{tarea_id}/modificar/{documento_id}")
-def modificar_documento(db: Session = Depends(obtener_bd)):
-  # modifica un documento
-  return
-
-# Operaciones de usuario
 
 
 @app.get("/empleados")
@@ -389,16 +478,36 @@ def login_post(usuario: model.PromotorLogin, db: Session = Depends(obtener_bd)):
     raise HTTPException(400, str(e))
 
 
-@app.patch("/modificar/empleado")
-def modificar_empleado(db: Session = Depends(obtener_bd)):
-  # modifica datos del empleado
-  return
+@app.patch("/modificar/empleado/{empleado_id}")
+def modificar_empleado(empleado_id: int, empleado: model.Empleado = Body(...), db: Session = Depends(obtener_bd)):
+  try:
+    consulta_empleado = db.query(schemas.Empleado).filter(schemas.Empleado.cedula == empleado_id)
+    db_empleado = consulta_empleado.first()
+
+    if not db_empleado: raise HTTPException(404, "Empleado no encontrado")
+
+    actualizar = empleado.dict(exclude_unset=True)
+    consulta_empleado.filter(schemas.Empleado.cedula == empleado_id).update(actualizar, synchronize_session=False)
+    db.commit()
+    db.refresh(db_empleado)
+
+    return {"estado": "exitoso", "proyecto": db_empleado}
+  except Exception as e:
+    raise HTTPException(400, str(e))
 
 
-@app.delete("/borrar/empleado")
-def borrar_empleado(db: Session = Depends(obtener_bd)):
-  # modifica datos del empleado
-  return
+@app.delete("/borrar/empleado/{empleado_id}")
+def borrar_empleado(empleado_id: int, db: Session = Depends(obtener_bd)):
+  try:
+    consulta_empleado = db.query(schemas.Empleado).filter(schemas.Empleado == empleado_id)
+    empleado = consulta_empleado.first()
+    if not empleado: raise HTTPException(404, "No existe el empleado")
+
+    consulta_empleado.delete(synchronize_session=False)
+    db.commit()
+    return {"estado": "exitoso"}
+  except Exception as e:
+    raise HTTPException(400, str(e))
 
 # Asignaciones
 

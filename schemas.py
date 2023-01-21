@@ -12,15 +12,14 @@ class Empleado(Base):
   direccion = Column(String(60))
   correo = Column(String(120))
   telefono = Column(String(22))
-  fecha_contratacion = Column(Date)               # date
+  fecha_contratacion = Column(Date)           # date
 
 
 class Promotor(Base):
   __tablename__ = "promotor"
   codigo = Column(Integer, primary_key=True)
-  usuario = Column(String(20))
-  contra = Column(String(16))
-  cedula_empleado = Column(ForeignKey("empleado.cedula"))
+  cedula_empleado = Column(Integer, ForeignKey("empleado.cedula"))
+  codigo_proyecto = Column(Integer, ForeignKey("proyectos.codigo"))
 
 
 class Proyectos(Base):
@@ -30,6 +29,7 @@ class Proyectos(Base):
   denominacion_comercial = Column(String(60))
   estado_actual = Column(String(60))
   empleado_proyecto = relationship("EmpleadoProyectos")
+  tarea = relationship("Tareas")
 
 
 class Tareas(Base):
@@ -41,6 +41,7 @@ class Tareas(Base):
   fecha_real = Column(Date)
   fecha_estimada = Column(Date)
   tipo = Column(String(60))
+  codigo_proyecto = Column(Integer, ForeignKey("proyectos.codigo"))
 
 
 class Documentos(Base):
@@ -64,8 +65,10 @@ class Version(Base):
 class EmpleadoTareas(Base):
   __tablename__ = "empleado_tareas"
   id = Column(Integer, primary_key=True)
-  codigo_tarea = Column(ForeignKey("tareas.codigo"))      # foreign key
-  cedula_empleado = Column(ForeignKey("empleado.cedula"))
+  codigo_tarea = Column(Integer, ForeignKey("tareas.codigo"))      # foreign key
+  cedula_empleado = Column(Integer, ForeignKey("empleado.cedula"))
+  empleado = relationship("Empleado")
+
 
 
 class EmpleadoProyectos(Base):

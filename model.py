@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 from datetime import date, time
+from typing import Optional
 
 
 class Empleado(BaseModel):
@@ -38,7 +39,9 @@ class Tareas(BaseModel):
   duracion_estimada: time
   duracion_real: time
   fecha_real: date
+  fecha_estimada: date
   tipo: str
+  codigo_proyecto: Optional[int]
 
 
 class Documentos(BaseModel):
@@ -48,6 +51,7 @@ class Documentos(BaseModel):
   descripcion: str
   tipo: str
   codigo_tarea: int
+
 
 
 class Version(BaseModel):
