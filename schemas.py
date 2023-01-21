@@ -20,6 +20,7 @@ class Promotor(Base):
   codigo = Column(Integer, primary_key=True)
   cedula_empleado = Column(Integer, ForeignKey("empleado.cedula"))
   codigo_proyecto = Column(Integer, ForeignKey("proyectos.codigo"))
+  empleado = relationship("Empleado")
 
 
 class Proyectos(Base):
@@ -29,6 +30,7 @@ class Proyectos(Base):
   denominacion_comercial = Column(String(60))
   estado_actual = Column(String(60))
   empleado_proyecto = relationship("EmpleadoProyectos")
+  promotor_proyecto = relationship("Promotor")
   tarea = relationship("Tareas")
 
 

@@ -9,7 +9,6 @@ from fastapi import FastAPI, Depends, Body
 from fastapi.exceptions import HTTPException
 # SQLAlchemy
 from sqlalchemy.orm import Session
-from sqlalchemy import select
 
 app = FastAPI()
 
@@ -34,7 +33,7 @@ Base.metadata.create_all(bind=engine)
 # TODO: "/proyecto/{proyecto_id/}/tareas" TAREAS DE UN PROYECTO
 # TODO: "/proyecto/{proyecto_id/crear/tarea/" CREAR UNA TAREA ASOCIADA A CIERTO PROYECTO
 # TODO: "/proyecto/{proyecto_id/tarea/{tarea_id}" RUTA GET, patch Y DELETE DE UNA TAREA
-# TODO: "/proyecto/{proyecto_id/tarea/{tarea_id}/docs" RUTA GET, POST, patch Y DELETE DE UN DOCUMENTO ASOCIADO A UNA TAREA
+# TODO: "/proyecto/{proyecto_id/tarea/{tarea_id}/docs" RUTA GET, POST, patch Y DELETE DE UN DOCUMENTO DE UNA TAREA DADA
 # TODO DONE 11/1/2023: login, crear_empleado, crear_promotor
 # TODO DONE 12/1/2023: terminadas rutas POST simples :D
 # TODO DONE 13/1/2023: adelantadas rutas de asignacion de proyectos y tareas
@@ -46,7 +45,7 @@ Base.metadata.create_all(bind=engine)
 connection: Session
 
 
-def obtener_bd():
+def obtener_bd():               # creamos la conexión con la base de datos
   global connection
   try:
     connection = SesionLocal()
@@ -59,114 +58,7 @@ def obtener_bd():
 
 @app.get("/")
 def home():
-  return {"estructura de la API": {  # no hacer caso a esto
-      "/proyectos": {
-        "descripcion": "muestra todos los proyectos",
-        "metodo": "GET",
-        "terminado": "si"
-      },
-      "/crear/proyecto": {
-        "descripcion": "crea un nuevo proyecto",
-        "metodo": "POST",
-        "terminado": "si"
-      },
-      "/modificar/proyecto/{proyecto_id}": {
-        "descripcion": "actualiza un proyecto existente",
-        "metodo": "patch",
-        "terminado": "no"
-      },
-      "/borrar/proyecto/{proyecto_id}": {
-        "descripcion": "borra un proyecto existente",
-        "metodo": "DELETE",
-        "terminado": "no"
-      },
-      "/proyecto/{proyecto_id}": {
-        "descripcion": "muestra un proyecto existente",
-        "metodo": "GET",
-        "terminado": "si"
-      },
-      "/tareas": {
-        "descripcion": "muestra todas las tareas",
-        "metodo": "GET",
-        "terminado": "si"
-      },
-      "/crear/tarea": {
-        "descripcion": "crea una nueva tarea",
-        "metodo": "POST",
-        "terminado": "si"
-      },
-      "/modificar/tarea/{tarea_id}": {
-        "descripcion": "actualiza una tarea existente",
-        "metodo": "patch",
-        "terminado": "no"
-      },
-      "/borrar/tarea/{tarea_id}": {
-        "descripcion": "borra una tarea",
-        "metodo": "DELETE",
-        "terminado": "no"
-      },
-      "/tarea/{tarea_id}": {
-        "descripcion": "muestra una tarea",
-        "metodo": "GET",
-        "terminado": "si"
-      },
-      "/tareas/{tarea_id}/documentos": {
-        "descripcion": "muestra los documentos asociados a cada tarea",
-        "metodo": "GET",
-        "terminado": "no"
-      },
-      "/tareas/{tarea_id}/crear/documento": {
-        "descripcion": "muestra los documentos asociados a cada tarea",
-        "metodo": "POST",
-        "terminado": "si"
-      },
-      "/tareas/{tarea_id}/modificar/documento/{documento_id}": {
-        "descripcion": "actualiza un documento",
-        "metodo": "patch",
-        "terminado": "no"
-      },
-      "/empleados": {
-        "descripcion": "muestra todos los empleados",
-        "metodo": "GET",
-        "terminado": "si"
-      },
-      "/empleado/{empleado_id}": {
-        "descripcion": "muestra un empleados",
-        "metodo": "GET",
-        "terminado": "si"
-      },
-      "/crear/empleado": {
-        "descripcion": "crea un empleado",
-        "metodo": "POST",
-        "terminado": "si"
-      },
-      "/crear/promotor": {
-        "descripcion": "crea un promotor",
-        "metodo": "POST",
-        "terminado": "si"
-      },
-      "/modificar/empleado/{empleado_id}": {
-        "descripcion": "modifica un empleado",
-        "metodo": "patch",
-        "terminado": "no"
-      },
-      "/borrar/empleado/{empleado_id}": {
-        "descripcion": "elimina un empleado",
-        "metodo": "DELETE",
-        "terminado": "no"
-      },
-      "/asignar/proyecto/{empleado_id}/{proyecto_id}": {
-        "descripcion": "asigna un empleado a un proyecto",
-        "metodo": "POST",
-        "terminado": "si"
-      },
-      "/asignar/tarea/{empleado_id}/{tarea_id}": {
-        "descripcion": "asigna un empleado a una tarea",
-        "metodo": "POST",
-        "terminado": "si"
-      },
-   }
-  }
+  return {"terminado": "SÍ 😍😍😍"}
 
 
 @app.get("/proyectos")
@@ -203,18 +95,22 @@ def agregar_proyecto(proyecto: model.Proyectos = Body(...), db: Session = Depend
     raise HTTPException(400, str(e))
 
 
+# noinspection PyTypeChecker
 @app.patch("/modificar/proyecto/{proyecto_id}")
 def actualizar_proyecto(proyecto_id: int, proyecto: model.Proyectos = Body(...), db: Session = Depends(obtener_bd)):
   try:
+    # creamos la consulta de proyecto y comprobamos que existe dicho proyecto
     consulta_proyecto = db.query(schemas.Proyectos).filter(schemas.Proyectos.codigo == proyecto_id)
     db_proyecto = consulta_proyecto.first()
 
-    if not db_proyecto: raise HTTPException(404, "Proyecto no encontrado")
+    if not db_proyecto:
+      raise HTTPException(404, "Proyecto no encontrado")
 
+    # asignamos los datos a actualizar y actualizamos estos
     actualizar = proyecto.dict(exclude_unset=True)
     consulta_proyecto.filter(schemas.Proyectos.codigo == proyecto_id).update(actualizar, synchronize_session=False)
-    db.commit()
-    db.refresh(db_proyecto)
+    db.commit()              # confirmamos cambios
+    db.refresh(db_proyecto)  # refrescamos la variable con los valores actualizados
 
     return {"estado": "exitoso", "proyecto": db_proyecto}
   except Exception as e:
@@ -224,10 +120,14 @@ def actualizar_proyecto(proyecto_id: int, proyecto: model.Proyectos = Body(...),
 @app.delete("/borrar/proyecto/{proyecto_id}")
 def borrar_proyecto(proyecto_id: int, db: Session = Depends(obtener_bd)):
   try:
+    # al igual que antes, realizamos la consulta y comprobamos que exista
     consulta_proyecto = db.query(schemas.Proyectos).filter(schemas.Proyectos.codigo == proyecto_id)
     proyecto = consulta_proyecto.first()
-    if not proyecto: raise HTTPException(404, "No existe el empleado")
+    if not proyecto:
+      raise HTTPException(404, "No existe el empleado")
 
+    # si existe, borramos
+    # noinspection PyTypeChecker
     consulta_proyecto.delete(synchronize_session=False)
     db.commit()
     return {"estado": "exitoso"}
@@ -284,7 +184,7 @@ def mostrar_tareas(proyecto_id: int, db: Session = Depends(obtener_bd)):
     raise HTTPException(400, str(e))
 
 
-@app.post("/crear/tarea")
+@app.post("/proyecto/{proyecto_id}/crear/tarea")
 def agregar_tarea(proyecto_id: int, tarea: model.Tareas = Body(...), db: Session = Depends(obtener_bd)):
   try:
     tarea.codigo_proyecto = proyecto_id
@@ -297,13 +197,15 @@ def agregar_tarea(proyecto_id: int, tarea: model.Tareas = Body(...), db: Session
     raise HTTPException(400, str(e))
 
 
+# noinspection PyTypeChecker
 @app.patch("/tarea/{tarea_id}")
 def modificar_tarea(tarea_id: int, tarea: schemas.Tareas = Body(...), db: Session = Depends(obtener_bd)):
   try:
     consulta_tarea = db.query(schemas.Tareas).filter(schemas.Tareas.codigo == tarea_id)
     db_tarea = consulta_tarea.first()
 
-    if not db_tarea: raise HTTPException(404, "Tarea no encontrada")
+    if not db_tarea:
+      raise HTTPException(404, "Tarea no encontrada")
 
     actualizar = tarea.dict(exclude_unset=True)
     consulta_tarea.filter(schemas.Tareas.codigo == tarea_id).update(actualizar, synchronize_session=False)
@@ -313,15 +215,16 @@ def modificar_tarea(tarea_id: int, tarea: schemas.Tareas = Body(...), db: Sessio
     return {"estado": "exitoso", "proyecto": db_tarea}
   except Exception as e:
     raise HTTPException(400, str(e))
-  return
 
 
+# noinspection PyTypeChecker
 @app.delete("/tarea/{tarea_id}")
 def borrar_tarea(tarea_id: int, db: Session = Depends(obtener_bd)):
   try:
     consulta_tarea = db.query(schemas.Tareas).filter(schemas.Tareas.codigo == tarea_id)
     tarea = consulta_tarea.first()
-    if not tarea: raise HTTPException(404, "No existe la tarea")
+    if not tarea:
+      raise HTTPException(404, "No existe la tarea")
 
     consulta_tarea.delete(synchronize_session=False)
     db.commit()
@@ -363,6 +266,7 @@ def empleados_del_proyecto(tarea_id: int, db: Session = Depends(obtener_bd)):
 
 # Operaciones de documentos asociados a cierta tarea
 
+
 @app.get("/tarea/{tarea_id}/docs")
 def docs_tarea(db: Session = Depends(obtener_bd)):
   try:
@@ -380,8 +284,8 @@ def docs_tarea(db: Session = Depends(obtener_bd)):
     raise HTTPException(400, str(e))
 
 
-@app.post("/proyecto/{proyecto_id}/tarea/{tarea_id}/docs")
-def crear_doc(proyecto_id: int, tarea_id: int, documento: model.Documentos, db: Session = Depends(obtener_bd)):
+@app.post("/tarea/{tarea_id}/docs")
+def crear_doc(tarea_id: int, documento: model.Documentos, db: Session = Depends(obtener_bd)):
   try:
     documento.codigo_tarea = tarea_id
     nuevo_doc = schemas.Empleado(**documento.dict())      # creamos al nuevo documento
@@ -459,32 +363,15 @@ def crear_promotor(promotor: model.Promotor = Body(...), db: Session = Depends(o
     raise HTTPException(400, str(e))
 
 
-@app.post("/login")
-def login_post(usuario: model.PromotorLogin, db: Session = Depends(obtener_bd)):
-  try:                                                      # ejecuta to do lo que se encuentre dentro si no hay errores
-    promotores = db.query(schemas.Promotor).all()           # obtenemos los promotores
-    for promotor in promotores:                             # iteramos los promotores
-
-      usuario_login = db.query(schemas.Promotor)\
-        .filter(usuario.usuario == promotor.usuario         # filter = WHERE usuario = "usuario" AND contra = "contra"
-                and usuario.contra == promotor.contra)\
-        .first()                                            # arrojamos la primera coincidencia
-
-    if usuario_login is None:                               # si no conseguimos al usuario
-      return {"confirmado": "no"}                           # no estará confirmado
-    else:  # de lo contrario
-      return {"confirmado": "si"}                           # estará confirmado
-  except Exception as e:                                    # si sucede un error o excepción, se ejecutará esto
-    raise HTTPException(400, str(e))
-
-
+# noinspection PyTypeChecker
 @app.patch("/modificar/empleado/{empleado_id}")
 def modificar_empleado(empleado_id: int, empleado: model.Empleado = Body(...), db: Session = Depends(obtener_bd)):
   try:
     consulta_empleado = db.query(schemas.Empleado).filter(schemas.Empleado.cedula == empleado_id)
     db_empleado = consulta_empleado.first()
 
-    if not db_empleado: raise HTTPException(404, "Empleado no encontrado")
+    if not db_empleado:
+      raise HTTPException(404, "Empleado no encontrado")
 
     actualizar = empleado.dict(exclude_unset=True)
     consulta_empleado.filter(schemas.Empleado.cedula == empleado_id).update(actualizar, synchronize_session=False)
@@ -496,12 +383,14 @@ def modificar_empleado(empleado_id: int, empleado: model.Empleado = Body(...), d
     raise HTTPException(400, str(e))
 
 
+# noinspection PyTypeChecker
 @app.delete("/borrar/empleado/{empleado_id}")
 def borrar_empleado(empleado_id: int, db: Session = Depends(obtener_bd)):
   try:
     consulta_empleado = db.query(schemas.Empleado).filter(schemas.Empleado == empleado_id)
     empleado = consulta_empleado.first()
-    if not empleado: raise HTTPException(404, "No existe el empleado")
+    if not empleado:
+      raise HTTPException(404, "No existe el empleado")
 
     consulta_empleado.delete(synchronize_session=False)
     db.commit()
