@@ -3,6 +3,7 @@ import schemas
 from database import SesionLocal, engine, Base
 from estructuras import Lista, Pila
 import model
+import datetime
 
 # FastAPI
 from fastapi import FastAPI, Depends, Body
@@ -68,10 +69,10 @@ def mostrar_proyectos(db: Session = Depends(obtener_bd)):
     proyectos_lista = Lista()
 
     # obtenemos los datos de la bd: SELECT * FROM proyectos
-    proyectos = db.query(schemas.Proyectos).all()
+    proyectos = db.query(schemas.Proyecto).all()
 
     for proyecto in proyectos:  # iteramos el objeto
-      proyectos_lista.agregar_final(proyecto.nombre)  # empujamos por atrás el nombre
+      proyectos_lista.agregar_final(proyecto)  # empujamos por atrás
 
     respuesta = proyectos_lista.retornar_datos()  # retornamos los datos de la lista
 
@@ -79,28 +80,35 @@ def mostrar_proyectos(db: Session = Depends(obtener_bd)):
 
     return {"cantidad": len(respuesta), "proyectos": respuesta}
   except Exception as e:
-    raise HTTPException(400, str(e))
+    raise HTTPException(500, str(e))
 
 
 @app.post("/crear/proyecto")
-def agregar_proyecto(proyecto: model.Proyectos = Body(...), db: Session = Depends(obtener_bd)):
+def agregar_proyecto(proyecto: model.Proyecto = Body(...), db: Session = Depends(obtener_bd)):
   try:
-    nuevo_proyecto = schemas.Proyectos(**proyecto.dict())     # creamos al nuevo proyecto
+    db_proyecto = db.query(schemas.Proyecto).filter(schemas.Proyecto.codigo == proyecto.codigo).first()
+    print(db_proyecto)
+    if db_proyecto:
+      raise HTTPException(404, "El proyecto ya existe")
+
+    del db_proyecto
+
+    nuevo_proyecto = schemas.Proyecto(**proyecto.dict())     # creamos al nuevo proyecto
     db.add(nuevo_proyecto)                                    # lo agregamos a la bd
     db.commit()                                               # confirmamos la inserción
     db.refresh(nuevo_proyecto)                                # refrescamos los valores en la variable
 
-    return {"estado": "exitoso", "empleado": nuevo_proyecto}  # retornamos al nuevo proyecto
+    return {"estado": "exitoso", "proyecto": nuevo_proyecto}  # retornamos al nuevo proyecto
   except Exception as e:
     raise HTTPException(400, str(e))
 
 
 # noinspection PyTypeChecker
 @app.patch("/modificar/proyecto/{proyecto_id}")
-def actualizar_proyecto(proyecto_id: int, proyecto: model.Proyectos = Body(...), db: Session = Depends(obtener_bd)):
+def actualizar_proyecto(proyecto_id: int, proyecto: model.Proyecto = Body(...), db: Session = Depends(obtener_bd)):
   try:
     # creamos la consulta de proyecto y comprobamos que existe dicho proyecto
-    consulta_proyecto = db.query(schemas.Proyectos).filter(schemas.Proyectos.codigo == proyecto_id)
+    consulta_proyecto = db.query(schemas.Proyecto).filter(schemas.Proyecto.codigo == proyecto_id)
     db_proyecto = consulta_proyecto.first()
 
     if not db_proyecto:
@@ -108,7 +116,7 @@ def actualizar_proyecto(proyecto_id: int, proyecto: model.Proyectos = Body(...),
 
     # asignamos los datos a actualizar y actualizamos estos
     actualizar = proyecto.dict(exclude_unset=True)
-    consulta_proyecto.filter(schemas.Proyectos.codigo == proyecto_id).update(actualizar, synchronize_session=False)
+    consulta_proyecto.filter(schemas.Proyecto.codigo == proyecto_id).update(actualizar, synchronize_session=False)
     db.commit()              # confirmamos cambios
     db.refresh(db_proyecto)  # refrescamos la variable con los valores actualizados
 
@@ -121,10 +129,10 @@ def actualizar_proyecto(proyecto_id: int, proyecto: model.Proyectos = Body(...),
 def borrar_proyecto(proyecto_id: int, db: Session = Depends(obtener_bd)):
   try:
     # al igual que antes, realizamos la consulta y comprobamos que exista
-    consulta_proyecto = db.query(schemas.Proyectos).filter(schemas.Proyectos.codigo == proyecto_id)
+    consulta_proyecto = db.query(schemas.Proyecto).filter(schemas.Proyecto.codigo == proyecto_id)
     proyecto = consulta_proyecto.first()
     if not proyecto:
-      raise HTTPException(404, "No existe el empleado")
+      raise HTTPException(404, "Proyecto no encontrado")
 
     # si existe, borramos
     # noinspection PyTypeChecker
@@ -138,10 +146,10 @@ def borrar_proyecto(proyecto_id: int, db: Session = Depends(obtener_bd)):
 @app.get("/proyecto/{proyecto_id}")
 def mostrar_proyecto(proyecto_id: int, db: Session = Depends(obtener_bd)):
   try:
-    proyecto = db.query(schemas.Proyectos).get(proyecto_id)  # SELECT * FROM proyectos WHERE codigo = proyecto_id
+    proyecto = db.query(schemas.Proyecto).get(proyecto_id)  # SELECT * FROM proyectos WHERE codigo = proyecto_id
 
-    if proyecto is None:
-      return {"detail": "El producto no existe"}
+    if not proyecto:
+      raise HTTPException(404, "Proyecto no encontrado")
 
     return {"proyecto": proyecto}  # retornamos el proyecto
   except Exception as e:
@@ -153,13 +161,19 @@ def mostrar_proyecto(proyecto_id: int, db: Session = Depends(obtener_bd)):
 @app.get("/proyecto/{proyecto_id}/empleados")
 def empleados_del_proyecto(proyecto_id: int, db: Session = Depends(obtener_bd)):
   try:
+    proyecto = db.query(schemas.Proyecto).filter(schemas.Proyecto.codigo == proyecto_id).first()
+    if not proyecto:
+      raise HTTPException(404, "Proyecto no encontrado")
+
+    del proyecto
+
     empleados_pila = Pila()
     empleados_proyecto = db.query(schemas.Empleado)\
-      .join(schemas.EmpleadoProyectos, schemas.Empleado.cedula == schemas.EmpleadoProyectos.cedula_empleado
-            and proyecto_id == schemas.EmpleadoProyectos.codigo_proyecto).all()
+      .join(schemas.EmpleadoProyecto, schemas.Empleado.cedula == schemas.EmpleadoProyecto.cedula_empleado
+            and proyecto_id == schemas.EmpleadoProyecto.codigo_proyecto).all()
 
     for empleado in empleados_proyecto:
-      empleados_pila.apilar(f"{empleado.nombre} {empleado.apellido}")
+      empleados_pila.apilar(empleado)
 
     respuesta = empleados_pila.retornar_datos()
 
@@ -171,8 +185,14 @@ def empleados_del_proyecto(proyecto_id: int, db: Session = Depends(obtener_bd)):
 @app.get("/proyecto/{proyecto_id}/tareas")
 def mostrar_tareas(proyecto_id: int, db: Session = Depends(obtener_bd)):
   try:
+    proyecto = db.query(schemas.Proyecto).filter(schemas.Proyecto.codigo == proyecto_id).first()
+    if not proyecto:
+      raise HTTPException(404, "Proyecto no encontrado")
+
+    del proyecto
+
     tareas_lista = Lista()
-    tareas = db.query(schemas.Tareas).filter(schemas.Tareas.codigo_proyecto == proyecto_id)
+    tareas = db.query(schemas.Tarea).filter(schemas.Tarea.codigo_proyecto == proyecto_id)
 
     for tarea in tareas:
       tareas_lista.agregar_final(tarea)
@@ -185,10 +205,22 @@ def mostrar_tareas(proyecto_id: int, db: Session = Depends(obtener_bd)):
 
 
 @app.post("/proyecto/{proyecto_id}/crear/tarea")
-def agregar_tarea(proyecto_id: int, tarea: model.Tareas = Body(...), db: Session = Depends(obtener_bd)):
+def agregar_tarea(proyecto_id: int, tarea: model.Tarea = Body(...), db: Session = Depends(obtener_bd)):
   try:
+    proyecto = db.query(schemas.Proyecto).filter(schemas.Proyecto.codigo == proyecto_id).first()
+    if not proyecto:
+      raise HTTPException(404, "Proyecto no encontrado")
+
+    del proyecto
+
+    db_tarea = db.query(schemas.Tarea).filter(schemas.Tarea.codigo == tarea.codigo).first()
+    if db_tarea:
+      raise HTTPException(400, "La tarea existe")
+
+    del db_tarea
+
     tarea.codigo_proyecto = proyecto_id
-    nueva_tarea = schemas.Tareas(**tarea.dict())        # creamos a la nueva tarea
+    nueva_tarea = schemas.Tarea(**tarea.dict())        # creamos a la nueva tarea
     db.add(nueva_tarea)                                 # lo agregamos a la bd
     db.commit()                                         # confirmamos la inserción
     db.refresh(nueva_tarea)                             # refrescamos los valores en la variable
@@ -198,17 +230,24 @@ def agregar_tarea(proyecto_id: int, tarea: model.Tareas = Body(...), db: Session
 
 
 # noinspection PyTypeChecker
-@app.patch("/tarea/{tarea_id}")
-def modificar_tarea(tarea_id: int, tarea: schemas.Tareas = Body(...), db: Session = Depends(obtener_bd)):
+@app.patch("/proyecto/{proyecto_id}/tarea/{tarea_id}")
+def modificar_tarea(proyecto_id: int, tarea_id: int, tarea: model.Tarea = Body(...), db: Session = Depends(obtener_bd)):
   try:
-    consulta_tarea = db.query(schemas.Tareas).filter(schemas.Tareas.codigo == tarea_id)
+    proyecto = db.query(schemas.Proyecto).filter(schemas.Proyecto.codigo == proyecto_id).first()
+    if not proyecto:
+      raise HTTPException(404, "Proyecto no encontrado")
+
+    del proyecto
+
+    consulta_tarea = db.query(schemas.Tarea).filter(schemas.Tarea.codigo == tarea_id)
     db_tarea = consulta_tarea.first()
 
     if not db_tarea:
       raise HTTPException(404, "Tarea no encontrada")
 
+    tarea.codigo_proyecto = proyecto_id
     actualizar = tarea.dict(exclude_unset=True)
-    consulta_tarea.filter(schemas.Tareas.codigo == tarea_id).update(actualizar, synchronize_session=False)
+    consulta_tarea.filter(schemas.Tarea.codigo == tarea_id).update(actualizar, synchronize_session=False)
     db.commit()
     db.refresh(db_tarea)
 
@@ -221,7 +260,7 @@ def modificar_tarea(tarea_id: int, tarea: schemas.Tareas = Body(...), db: Sessio
 @app.delete("/tarea/{tarea_id}")
 def borrar_tarea(tarea_id: int, db: Session = Depends(obtener_bd)):
   try:
-    consulta_tarea = db.query(schemas.Tareas).filter(schemas.Tareas.codigo == tarea_id)
+    consulta_tarea = db.query(schemas.Tarea).filter(schemas.Tarea.codigo == tarea_id)
     tarea = consulta_tarea.first()
     if not tarea:
       raise HTTPException(404, "No existe la tarea")
@@ -233,13 +272,13 @@ def borrar_tarea(tarea_id: int, db: Session = Depends(obtener_bd)):
     raise HTTPException(400, str(e))
 
 
-@app.get("/proyecto/{proyecto_id}/tarea/{tarea_id}")
-def mostrar_tarea(proyecto_id: int, tarea_id: int, db: Session = Depends(obtener_bd)):
+@app.get("/tarea/{tarea_id}")
+def mostrar_tarea(tarea_id: int, db: Session = Depends(obtener_bd)):
   try:
-    tarea = db.query(schemas.Tareas).filter(schemas.Proyectos.codigo == proyecto_id).get(tarea_id)
+    tarea = db.query(schemas.Tarea).filter(schemas.Tarea.codigo == tarea_id).first()
 
-    if tarea is None:
-      return {"detail": "La tarea no existe"}
+    if not tarea:
+      raise HTTPException(404, "No existe la tarea")
 
     return {"tarea": tarea}
   except Exception as e:
@@ -247,20 +286,28 @@ def mostrar_tarea(proyecto_id: int, tarea_id: int, db: Session = Depends(obtener
 
 
 @app.get("/tarea/{tarea_id}/empleados")
-def empleados_del_proyecto(tarea_id: int, db: Session = Depends(obtener_bd)):
+def empleados_de_la_tarea(tarea_id: int, db: Session = Depends(obtener_bd)):
   try:
+    tarea = db.query(schemas.Tarea).filter(schemas.Tarea.codigo == tarea_id).first()
+    if not tarea:
+      raise HTTPException(404, "Tarea no encontrada")
+
+    del tarea
+
     empleados_pila = Pila()
     empleados_tarea = db.query(schemas.Empleado)\
-      .join(schemas.EmpleadoTareas, schemas.Empleado.cedula == schemas.EmpleadoTareas.cedula_empleado
-            and schemas.Tareas.codigo == schemas.EmpleadoTareas.codigo_tarea)\
-      .filter(schemas.EmpleadoTareas.codigo_tarea == tarea_id).all()
+      .join(schemas.EmpleadoTarea, schemas.Empleado.cedula == schemas.EmpleadoTarea.cedula_empleado
+            and schemas.Tarea.codigo == schemas.EmpleadoTarea.codigo_tareas)\
+      .filter(schemas.EmpleadoTarea.codigo_tareas == tarea_id).all()
 
     for empleado in empleados_tarea:
-      empleados_pila.apilar(f"{empleado.nombre} {empleado.apellido}")
+      empleados_pila.apilar(empleado)
 
     respuesta = empleados_pila.retornar_datos()
 
-    return {"cantidad": len(respuesta), "tareas": respuesta}
+    del empleados_pila
+
+    return {"cantidad": len(respuesta), "empleados": respuesta}
   except Exception as e:
     raise HTTPException(400, str(e))
 
@@ -268,14 +315,20 @@ def empleados_del_proyecto(tarea_id: int, db: Session = Depends(obtener_bd)):
 
 
 @app.get("/tarea/{tarea_id}/docs")
-def docs_tarea(db: Session = Depends(obtener_bd)):
+def docs_tarea(tarea_id: int, db: Session = Depends(obtener_bd)):
   try:
+    tarea = db.query(schemas.Tarea).filter(schemas.Tarea.codigo == tarea_id).first()
+    if not tarea:
+      raise HTTPException(404, "Tarea no encontrada")
+
+    del tarea
+
     docs_pila = Pila()  # creamos una pila
-    documentos = db.query(schemas.Documentos).all()  # obtenemos todos los registros de empleado
+    documentos = db.query(schemas.Documento).all()  # obtenemos todos los registros de empleado
 
     for documento in documentos:  # iteramos el objeto
       # apilamos el nombre y el apellido
-      docs_pila.apilar(f"{documento.nombre.title()} {documento.apellido.title()}")
+      docs_pila.apilar(documento)
 
     respuesta = docs_pila.retornar_datos()
 
@@ -285,22 +338,38 @@ def docs_tarea(db: Session = Depends(obtener_bd)):
 
 
 @app.post("/tarea/{tarea_id}/docs")
-def crear_doc(tarea_id: int, documento: model.Documentos, db: Session = Depends(obtener_bd)):
+def crear_doc(tarea_id: int, documento: model.Documento, db: Session = Depends(obtener_bd)):
   try:
-    documento.codigo_tarea = tarea_id
-    nuevo_doc = schemas.Empleado(**documento.dict())      # creamos al nuevo documento
+    tarea = db.query(schemas.Tarea).filter(schemas.Tarea.codigo == tarea_id).first()
+    if not tarea:
+      raise HTTPException(404, "Tarea no encontrada")
+
+    del tarea
+
+    doc = db.query(schemas.Documento).filter(schemas.Documento.codigo == documento.codigo).first()
+    if doc:
+      raise HTTPException(404, "Documento ya existe")
+
+    del doc
+
+    documento.codigo_tareas = tarea_id
+    nuevo_doc = schemas.Documento(**documento.dict())      # creamos al nuevo documento
     db.add(nuevo_doc)                                     # lo agregamos a la bd
     db.commit()                                           # confirmamos la inserción
     db.refresh(nuevo_doc)                                 # refrescamos los valores en la variable
 
-    version = model.Version()
-    version.codigo_documentos = documento.codigo
-    version.descripcion = documento.descripcion
-    version.codigo = documento.codigo
-    nueva_version = schemas.Version(**version.dict())
+    version = {
+      "codigo": documento.codigo,
+      "fecha": datetime.date.today(),
+      "descripcion": documento.descripcion,
+      "codigo_documentos": documento.codigo
+    }
+
+    nueva_version = schemas.Version(**version)
     db.add(nueva_version)
     db.commit()
     db.refresh(nuevo_doc)
+    db.refresh(nueva_version)
 
     return {"estado": "exitoso", "documento": nuevo_doc, "version": nueva_version}  # retornamos al nuevo documento
   except Exception as e:
@@ -315,7 +384,7 @@ def obtener_empleados(db: Session = Depends(obtener_bd)):
 
     for empleado in empleados:  # iteramos el objeto
       # apilamos el nombre y el apellido
-      empleados_pila.apilar(f"{empleado.nombre.title()} {empleado.apellido.title()}")
+      empleados_pila.apilar(empleado)
 
     respuesta = empleados_pila.retornar_datos()
 
@@ -330,7 +399,7 @@ def obtener_empleado(empleado_id: int, db: Session = Depends(obtener_bd)):
     empleado = db.query(schemas.Empleado).get(empleado_id)  # SELECT * FROM empleado WHERE cedula = empleado_id
 
     if empleado is None:
-      return {"detail": "El empleado no existe"}
+      raise HTTPException(404, "El empleado no existe")
 
     return {"empleado": empleado}
   except Exception as e:
@@ -340,6 +409,12 @@ def obtener_empleado(empleado_id: int, db: Session = Depends(obtener_bd)):
 @app.post("/nuevo/empleado")
 def crear_empleado(empleado: model.Empleado = Body(...), db: Session = Depends(obtener_bd)):
   try:
+    db_empleado = db.query(schemas.Empleado).filter(schemas.Empleado.cedula == empleado.cedula).first()
+    if db_empleado:
+      raise HTTPException(404, "El empleado ya existe")
+
+    del db_empleado
+
     nuevo_empleado = schemas.Empleado(**empleado.dict())      # creamos al nuevo empleado
     db.add(nuevo_empleado)                                    # lo agregamos a la bd
     db.commit()                                               # confirmamos la inserción
@@ -353,6 +428,12 @@ def crear_empleado(empleado: model.Empleado = Body(...), db: Session = Depends(o
 @app.post("/nuevo/promotor")
 def crear_promotor(promotor: model.Promotor = Body(...), db: Session = Depends(obtener_bd)):
   try:
+    promotor = db.query(schemas.Promotor).filter(schemas.Promotor.codigo == promotor.codigo).first()
+    if promotor:
+      raise HTTPException(404, "El promotor ya existe")
+
+    del promotor
+
     nuevo_promotor = schemas.Promotor(**promotor.dict())  # creamos al nuevo promotor
     db.add(nuevo_promotor)                                # mismo que función anterior
     db.commit()
@@ -402,16 +483,27 @@ def borrar_empleado(empleado_id: int, db: Session = Depends(obtener_bd)):
 
 
 @app.post("/asignar/tarea")
-def asignar_proyecto(tarea_asignar: model.EmpleadoTareas = Body(...), db: Session = Depends(obtener_bd)):
+def asignar_proyecto(tarea_asignar: model.EmpleadoTarea = Body(...), db: Session = Depends(obtener_bd)):
   try:
-    empleado_asignado = schemas.EmpleadoTareas(**tarea_asignar.dict())  # creamos al nuevo promotor
+    empleado = db.query(schemas.Empleado).filter(schemas.Empleado.cedula == tarea_asignar.cedula_empleado).first()
+    tarea = db.query(schemas.Tarea).filter(schemas.Tarea.codigo == tarea_asignar.codigo_tareas).first()
+    if not empleado and not tarea:
+      raise HTTPException(404, "La tarea y el empleado no existen")
+    elif not empleado:
+      raise HTTPException(404, "El empleado no existe")
+    elif not tarea:
+      raise HTTPException(404, "La tarea no existe")
+
+    del empleado, tarea
+
+    empleado_asignado = schemas.EmpleadoTarea(**tarea_asignar.dict())  # creamos al nuevo promotor
     db.add(empleado_asignado)  # mismo que función anterior
     db.commit()
 
-    asignacion = db.query(schemas.Tareas, schemas.Empleado) \
-      .join(schemas.EmpleadoTareas, schemas.Empleado.cedula == schemas.EmpleadoTareas.cedula_empleado
-            and schemas.Tareas.codigo == schemas.EmpleadoTareas.codigo_tarea) \
-      .filter(schemas.EmpleadoTareas.id == empleado_asignado.id).all()
+    asignacion = db.query(schemas.Tarea, schemas.Empleado) \
+      .join(schemas.EmpleadoTarea, schemas.Empleado.cedula == schemas.EmpleadoTarea.cedula_empleado
+            and schemas.Tarea.codigo == schemas.EmpleadoTarea.codigo_tareas) \
+      .filter(schemas.EmpleadoTarea.id == empleado_asignado.id).all()
 
     return {"estado": "exitoso", "asignacion": asignacion}
   except Exception as e:
@@ -421,14 +513,25 @@ def asignar_proyecto(tarea_asignar: model.EmpleadoTareas = Body(...), db: Sessio
 @app.post("/asignar/proyecto")
 def asignar_tarea(proyecto_asignar: model.EmpleadoProyecto = Body(...), db: Session = Depends(obtener_bd)):
   try:
-    empleado_asignado = schemas.EmpleadoProyectos(**proyecto_asignar.dict())  # creamos al nuevo promotor
+    empleado = db.query(schemas.Empleado).filter(schemas.Empleado.cedula == proyecto_asignar.cedula_empleado).first()
+    proyecto = db.query(schemas.Proyecto).filter(schemas.Proyecto.codigo == proyecto_asignar.codigo_proyecto).first()
+    if not empleado and not proyecto:
+      raise HTTPException(404, "El proyecto y el empleado no existen")
+    elif not empleado:
+      raise HTTPException(404, "El empleado no existe")
+    elif not proyecto:
+      raise HTTPException(404, "El proyecto no existe")
+
+    del empleado, proyecto
+
+    empleado_asignado = schemas.EmpleadoProyecto(**proyecto_asignar.dict())  # creamos al nuevo promotor
     db.add(empleado_asignado)  # mismo que función anterior
     db.commit()
 
-    asignacion = db.query(schemas.Proyectos, schemas.Empleado)\
-      .join(schemas.EmpleadoProyectos, schemas.Empleado.cedula == schemas.EmpleadoProyectos.cedula_empleado
-            and schemas.Proyectos.codigo == schemas.EmpleadoProyectos.codigo_proyecto)\
-      .filter(schemas.EmpleadoProyectos.id == empleado_asignado.id).all()
+    asignacion = db.query(schemas.Proyecto, schemas.Empleado)\
+      .join(schemas.EmpleadoProyecto, schemas.Empleado.cedula == schemas.EmpleadoProyecto.cedula_empleado
+            and schemas.Proyecto.codigo == schemas.EmpleadoProyecto.codigo_proyecto)\
+      .filter(schemas.EmpleadoProyecto.id == empleado_asignado.id).all()
 
     return {"estado": "exitoso", "asignacion": asignacion}
   except Exception as e:

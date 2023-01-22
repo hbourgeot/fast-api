@@ -23,18 +23,18 @@ class Promotor(Base):
   empleado = relationship("Empleado")
 
 
-class Proyectos(Base):
+class Proyecto(Base):
   __tablename__ = "proyectos"
   codigo = Column(Integer, primary_key=True)
   nombre = Column(String(60))
   denominacion_comercial = Column(String(60))
   estado_actual = Column(String(60))
-  empleado_proyecto = relationship("EmpleadoProyectos")
+  empleado_proyecto = relationship("EmpleadoProyecto")
   promotor_proyecto = relationship("Promotor")
-  tarea = relationship("Tareas")
+  tarea = relationship("Tarea")
 
 
-class Tareas(Base):
+class Tarea(Base):
   __tablename__ = "tareas"
   codigo = Column(Integer, primary_key=True)
   descripcion = Column(String(60))
@@ -44,9 +44,10 @@ class Tareas(Base):
   fecha_estimada = Column(Date)
   tipo = Column(String(60))
   codigo_proyecto = Column(Integer, ForeignKey("proyectos.codigo"))
+  empleado_tarea = relationship("EmpleadoTarea")
 
 
-class Documentos(Base):
+class Documento(Base):
   __tablename__ = "documentos"
   codigo = Column(Integer, primary_key=True)
   documento_especificacion = Column(String(60))
@@ -54,6 +55,7 @@ class Documentos(Base):
   descripcion = Column(Text)
   tipo = Column(String(60))
   codigo_tareas = Column(ForeignKey("tareas.codigo"))
+  version = relationship("Version")
 
 
 class Version(Base):
@@ -61,19 +63,18 @@ class Version(Base):
   codigo = Column(Integer, primary_key=True)
   fecha = Column(Date)
   descripcion = Column(String(60))
-  codigo_documentos = Column(ForeignKey("documentos.codigo"))
+  codigo_documentos = Column(Integer, ForeignKey("documentos.codigo"))
 
 
-class EmpleadoTareas(Base):
+class EmpleadoTarea(Base):
   __tablename__ = "empleado_tareas"
   id = Column(Integer, primary_key=True)
-  codigo_tarea = Column(Integer, ForeignKey("tareas.codigo"))      # foreign key
+  codigo_tareas = Column(Integer, ForeignKey("tareas.codigo"))      # foreign key
   cedula_empleado = Column(Integer, ForeignKey("empleado.cedula"))
   empleado = relationship("Empleado")
 
 
-
-class EmpleadoProyectos(Base):
+class EmpleadoProyecto(Base):
   __tablename__ = "empleado_proyectos"
   id = Column(Integer, primary_key=True)
   codigo_proyecto = Column(Integer, ForeignKey("proyectos.codigo"))
