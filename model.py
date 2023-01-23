@@ -46,7 +46,6 @@ class Documento(BaseModel):
   codigo_tareas: int
 
 
-
 class Version(BaseModel):
   codigo: int
   fecha: date
