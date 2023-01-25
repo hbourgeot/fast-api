@@ -4,24 +4,18 @@ class Nodo:
     self.dato = dato
     self.sgte = sgte
 
-
 # Creamos la clase Lista
 
 
 class Lista:
 
-  def __init__(self):
+  def __init__(self): #DepartamentoEscuela
     self.cbza = None
 
   # Método para agregar elementos en el frente de la lista enlazada
 
   def agregar_frente(self, dato):
     self.cbza = Nodo(dato=dato, sgte=self.cbza)
-
-  # Método para verificar si la lista enlazada esta vacia
-
-  def esta_vacia(self):
-    return self.cbza is None
 
   # Método para agregar elementos al final de la lista enlazada
   def agregar_final(self, dato):
@@ -66,16 +60,6 @@ class Pila:
     nuevo_nodo = Nodo(dato)
     nuevo_nodo.sgte = self.superior
     self.superior = nuevo_nodo
-
-  def desapilar(self):
-    # Si no hay datos en el nodo superior, regresamos
-
-    if self.superior is None:
-      print("No hay ningún elemento en la pila para desapilar")
-      return
-
-    print(f"Desapilar {self.superior.dato}")
-    self.superior = self.superior.sgte
 
   def retornar_datos(self):
 

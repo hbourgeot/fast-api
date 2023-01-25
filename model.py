@@ -5,7 +5,7 @@ from typing import Optional
 
 class Empleado(BaseModel):
   __tablename__ = "empleado"
-  cedula: int
+  cedula: int-
   nombre: str
   apellido: str
   direccion: str

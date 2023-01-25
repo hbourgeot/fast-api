@@ -24,32 +24,6 @@ app.add_middleware(
 
 Base.metadata.create_all(bind=engine)
 
-"""
-  ¿Qué es GET, POST, patch Y DELETE?
-
-  GET = Obtener
-  POST = Crear
-  PATCH = Actualizar parcialmente
-  patch = actualizar algo completamente
-  DELETE = Borrar
-
-  ¿Y qué son estos? son los métodos de HTTP, recomiendo que lean más acerca de ellos
-"""
-
-# TODO: CREAR NUEVAS RUTAS (Luis)
-# TODO: ELIMINA RUTAS ASOCIADAS A LOS DOCUMENTOS DE UNA TAREA
-# TODO: "/proyecto/{proyecto_id}/empleados/" EMPLEADOS DE UN PROYECTO
-# TODO: "/tarea/{tarea_id}/empleados/" EMPLEADOS DE UNA TAREA
-# TODO: "/proyecto/{proyecto_id/}/tareas" TAREAS DE UN PROYECTO
-# TODO: "/proyecto/{proyecto_id/crear/tarea/" CREAR UNA TAREA ASOCIADA A CIERTO PROYECTO
-# TODO: "/proyecto/{proyecto_id/tarea/{tarea_id}" RUTA GET, patch Y DELETE DE UNA TAREA
-# TODO: "/proyecto/{proyecto_id/tarea/{tarea_id}/docs" RUTA GET, POST, patch Y DELETE DE UN DOCUMENTO DE UNA TAREA DADA
-# TODO DONE 11/1/2023: login, crear_empleado, crear_promotor
-# TODO DONE 12/1/2023: terminadas rutas POST simples :D
-# TODO DONE 13/1/2023: adelantadas rutas de asignacion de proyectos y tareas
-# TODO DONE 14/1/2023: añadidas algunas funciones GET
-# TODO DONE 15/1/2023: añadido uso de estructuras de datos y GET de varios registros :3
-
 # Abrimos la conexion con la base de datos
 
 connection: Session
