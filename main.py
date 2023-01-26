@@ -18,7 +18,7 @@ app.add_middleware(
   CORSMiddleware,
   allow_origins=origins,
   allow_credentials=True,
-  allow_methods=["GET","POST","PATCH","DELETE"],
+  allow_methods=["GET", "POST", "PATCH", "DELETE"],
   allow_headers=["*"]
 )
 
@@ -70,7 +70,6 @@ def mostrar_proyectos(db: Session = Depends(obtener_bd)):
 def agregar_proyecto(proyecto: model.Proyecto = Body(...), db: Session = Depends(obtener_bd)):
   try:
     db_proyecto = db.query(schemas.Proyecto).filter(schemas.Proyecto.codigo == proyecto.codigo).first()
-    print(db_proyecto)
     if db_proyecto:
       raise HTTPException(404, "El proyecto ya existe")
 
@@ -554,3 +553,20 @@ def asignar_proyecto(proyecto_asignar: model.EmpleadoProyecto = Body(...), db: S
     return {"estado": "exitoso", "asignacion": asignacion}
   except Exception as e:
     raise HTTPException(400, str(e))
+
+
+@app.get("/login/{nombre_de_usuario}/{password}")
+def login(nombre_de_usuario: str, password: str, db: Session = Depends(obtener_bd)):
+  try:
+    db_usuario = db.query(schemas.Usuario).filter(schemas.Usuario.usuario == nombre_de_usuario
+                                                  and schemas.Usuario.password == password).first()
+
+    if not db_usuario:
+      return {"confirmado": "no"}
+
+    if db_usuario.administrador is True:
+      return {"confirmado": "si", "administrador": "si"}
+
+    return {"confirmado": "si", "administrador": "no"}
+  except Exception as e:
+    raise HTTPException(500, str(e))

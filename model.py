@@ -5,7 +5,7 @@ from typing import Optional
 
 class Empleado(BaseModel):
   __tablename__ = "empleado"
-  cedula: int-
+  cedula: int
   nombre: str
   apellido: str
   direccion: str
@@ -17,6 +17,7 @@ class Empleado(BaseModel):
 class Promotor(BaseModel):
   codigo: int
   cedula_empleado: int
+  codigo_proyecto: int
 
 
 class Proyecto(BaseModel):
@@ -54,12 +55,17 @@ class Version(BaseModel):
 
 
 class EmpleadoTarea(BaseModel):
-  id: int
+  codigo: int
   codigo_tareas: int
   cedula_empleado: int
 
 
 class EmpleadoProyecto(BaseModel):
-  id: int
+  codigo: int
   codigo_proyecto: int
   cedula_empleado: int
+
+
+class Usuario(BaseModel):
+  usuario: str
+  password: str
