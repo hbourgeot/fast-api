@@ -51,7 +51,7 @@ class Documento(Base):
   __tablename__ = "documentos"
   codigo = Column(Integer, primary_key=True, autoincrement=True)
   documento_especificacion = Column(String(60))
-  codigo_fuente = Column(Integer)
+  codigo_fuente = Column(String(140))
   descripcion = Column(Text)
   tipo = Column(String(60))
   codigo_tareas = Column(ForeignKey("tareas.codigo"))

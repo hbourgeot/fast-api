@@ -75,7 +75,11 @@ def agregar_proyecto(proyecto: model.Proyecto = Body(...), db: Session = Depends
 
     del db_proyecto
 
-    nuevo_proyecto = schemas.Proyecto(**proyecto.dict())     # creamos al nuevo proyecto
+    codigo = len(db.query(schemas.Proyecto).all()) + 1
+    nuevo_proyecto = schemas.Proyecto(codigo=codigo,nombre=proyecto.nombre,
+                                      denominacion_comercial=proyecto.denominacion_comercial,
+                                      estado_actual=proyecto.estado_actual,
+                                      )     # creamos al nuevo proyecto
     db.add(nuevo_proyecto)                                    # lo agregamos a la bd
     db.commit()                                               # confirmamos la inserción
     db.refresh(nuevo_proyecto)                                # refrescamos los valores en la variable
@@ -166,7 +170,7 @@ def empleados_del_proyecto(proyecto_id: int, db: Session = Depends(obtener_bd)):
 
 
 @app.get("/proyecto/{proyecto_id}/tareas")
-def mostrar_tareas(proyecto_id: int, db: Session = Depends(obtener_bd)):
+def mostrar_tareas_del_proyecto(proyecto_id: int, db: Session = Depends(obtener_bd)):
   try:
     proyecto = db.query(schemas.Proyecto).filter(schemas.Proyecto.codigo == proyecto_id).first()
     if not proyecto:
@@ -186,6 +190,22 @@ def mostrar_tareas(proyecto_id: int, db: Session = Depends(obtener_bd)):
   except Exception as e:
     raise HTTPException(400, str(e))
 
+@app.get("/tareas")
+def mostrar_tareas(db: Session = Depends(obtener_bd)):
+  try:
+    tareas_lista = Lista()
+    tareas = db.query(schemas.Tarea).all()
+
+    for tarea in tareas:
+      tareas_lista.agregar_final(tarea)
+
+    respuesta = tareas_lista.retornar_datos()
+
+    del tareas_lista
+
+    return {"cantidad": len(respuesta), "tareas": respuesta}
+  except Exception as e:
+    raise HTTPException(400, str(e))
 
 @app.post("/proyecto/{proyecto_id}/crear/tarea")
 def agregar_tarea(proyecto_id: int, tarea: model.Tarea = Body(...), db: Session = Depends(obtener_bd)):
@@ -200,8 +220,15 @@ def agregar_tarea(proyecto_id: int, tarea: model.Tarea = Body(...), db: Session 
 
     del db_tarea, proyecto
 
-    tarea.codigo_proyecto = proyecto_id
-    nueva_tarea = schemas.Tarea(**tarea.dict())        # creamos a la nueva tarea
+    codigo = len(db.query(schemas.Tarea).all()) + 1
+    nueva_tarea = schemas.Tarea(codigo=codigo,
+                                descripcion=tarea.descripcion,
+                                duracion_estimada=tarea.duracion_estimada,
+                                duracion_real=tarea.duracion_real,
+                                fecha_real=tarea.fecha_real,
+                                fecha_estimada=tarea.fecha_estimada,
+                                tipo=tarea.tipo, codigo_proyecto=proyecto_id)        # creamos a la nueva tarea
+
     db.add(nueva_tarea)                                 # lo agregamos a la bd
     db.commit()                                         # confirmamos la inserción
     db.refresh(nueva_tarea)                             # refrescamos los valores en la variable
@@ -211,7 +238,7 @@ def agregar_tarea(proyecto_id: int, tarea: model.Tarea = Body(...), db: Session 
 
 
 # noinspection PyTypeChecker
-@app.patch("/proyecto/{proyecto_id}/tarea/{tarea_id}")
+@app.patch("/tarea/{tarea_id}")
 def modificar_tarea(proyecto_id: int, tarea_id: int, tarea: model.Tarea = Body(...), db: Session = Depends(obtener_bd)):
   try:
     proyecto = db.query(schemas.Proyecto).filter(schemas.Proyecto.codigo == proyecto_id).first()
@@ -331,8 +358,13 @@ def crear_doc(tarea_id: int, documento: model.Documento, db: Session = Depends(o
 
     del doc, tarea
 
-    documento.codigo_tareas = tarea_id
-    nuevo_doc = schemas.Documento(**documento.dict())      # creamos al nuevo documento
+    codigo = len(db.query(schemas.Documento).all()) + 1
+    nuevo_doc = schemas.Documento(codigo=codigo,
+                                  documento_especificacion=documento.documento_especificacion,
+                                  codigo_fuente=documento.codigo_fuente,
+                                  descripcion=documento.descripcion,
+                                  tipo=documento.tipo,
+                                  codigo_tareas=tarea_id)      # creamos al nuevo documento
     db.add(nuevo_doc)                                     # lo agregamos a la bd
     db.commit()                                           # confirmamos la inserción
     db.refresh(nuevo_doc)                                 # refrescamos los valores en la variable
@@ -376,8 +408,10 @@ def crear_version(doc_id: int, version: model.Version = Body(...), db: Session =
 
     del ver, doc
 
-    version.codigo_documentos = doc_id
-    db_version = schemas.Version(**version.dict())
+    codigo = len(db.query(schemas.Version).all()) + 1
+    db_version = schemas.Version(codigo=codigo, fecha=version.fecha,
+                                 descripcion=version.descripcion,
+                                 codigo_documentos=doc_id)
     db.add(db_version)
     db.commit()
     db.refresh(db_version)

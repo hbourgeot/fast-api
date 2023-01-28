@@ -1,13 +1,13 @@
 -- MySQL dump 10.13  Distrib 8.0.31, for Win64 (x86_64)
 --
--- Host: localhost    Database: solucioneshsl
+-- Host: 127.0.0.1    Database: solucioneshsl
 -- ------------------------------------------------------
 -- Server version	8.0.31
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
 /*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
-/*!50503 SET NAMES utf8 */;
+/*!50503 SET NAMES utf8mb4 */;
 /*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;
 /*!40103 SET TIME_ZONE='+00:00' */;
 /*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;
@@ -69,6 +69,7 @@ CREATE TABLE `empleado` (
 
 LOCK TABLES `empleado` WRITE;
 /*!40000 ALTER TABLE `empleado` DISABLE KEYS */;
+INSERT INTO `empleado` VALUES (29890437,'Elibeth','Curalli','Donde el diablo botó el sombrero','elibeth@gmail.com','0416-7351688','2023-01-01 00:00:00'),(30555724,'Henrry','Bourgeot','La morita 1, Urb. Villas de Aragua, C/ cuyagua, nro. 7','henrrybrgt@gmail.com','0414-4571302','2023-01-28 00:00:00');
 /*!40000 ALTER TABLE `empleado` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -88,7 +89,7 @@ CREATE TABLE `empleado_proyectos` (
   KEY `cedula_empleado` (`cedula_empleado`),
   CONSTRAINT `empleado_proyectos_ibfk_1` FOREIGN KEY (`codigo_proyecto`) REFERENCES `proyectos` (`codigo`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `empleado_proyectos_ibfk_2` FOREIGN KEY (`cedula_empleado`) REFERENCES `empleado` (`cedula`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -97,6 +98,7 @@ CREATE TABLE `empleado_proyectos` (
 
 LOCK TABLES `empleado_proyectos` WRITE;
 /*!40000 ALTER TABLE `empleado_proyectos` DISABLE KEYS */;
+INSERT INTO `empleado_proyectos` VALUES (1,1,30555724),(2,2,30555724),(3,2,29890437);
 /*!40000 ALTER TABLE `empleado_proyectos` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -199,7 +201,7 @@ CREATE TABLE `proyectos` (
   PRIMARY KEY (`codigo`),
   UNIQUE KEY `nombre` (`nombre`),
   UNIQUE KEY `denominacion_comercial` (`denominacion_comercial`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -208,6 +210,7 @@ CREATE TABLE `proyectos` (
 
 LOCK TABLES `proyectos` WRITE;
 /*!40000 ALTER TABLE `proyectos` DISABLE KEYS */;
+INSERT INTO `proyectos` VALUES (1,'sol-hsl','Soluciones HSL','Activo'),(2,'hsl','Proyecto HSL','Activo'),(3,'porthen','Pörtafolio de Henry','Inactivo');
 /*!40000 ALTER TABLE `proyectos` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -223,14 +226,14 @@ CREATE TABLE `tareas` (
   `descripcion` varchar(60) NOT NULL,
   `duracion_estimada` time DEFAULT NULL,
   `tipo` varchar(60) NOT NULL,
-  `fecha_real` datetime NOT NULL,
-  `fecha_estimada` datetime NOT NULL,
+  `fecha_real` date DEFAULT NULL,
+  `fecha_estimada` date DEFAULT NULL,
   `duracion_real` time NOT NULL,
   `codigo_proyecto` int NOT NULL,
   PRIMARY KEY (`codigo`),
   KEY `codigo_proyecto` (`codigo_proyecto`),
   CONSTRAINT `tareas_ibfk_1` FOREIGN KEY (`codigo_proyecto`) REFERENCES `proyectos` (`codigo`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -239,6 +242,7 @@ CREATE TABLE `tareas` (
 
 LOCK TABLES `tareas` WRITE;
 /*!40000 ALTER TABLE `tareas` DISABLE KEYS */;
+INSERT INTO `tareas` VALUES (1,'Terminar','20:00:00','Código','2022-11-28','2023-01-28','23:59:00',1);
 /*!40000 ALTER TABLE `tareas` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -303,7 +307,7 @@ DROP TABLE IF EXISTS `version`;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `version` (
   `codigo` int NOT NULL AUTO_INCREMENT,
-  `fecha` datetime NOT NULL,
+  `fecha` date NOT NULL,
   `descripcion` varchar(60) NOT NULL,
   `codigo_documentos` int NOT NULL,
   PRIMARY KEY (`codigo`),
@@ -330,4 +334,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2023-01-26 21:15:38
+-- Dump completed on 2023-01-28 17:16:46

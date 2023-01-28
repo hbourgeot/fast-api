@@ -15,20 +15,20 @@ class Empleado(BaseModel):
 
 
 class Promotor(BaseModel):
-  codigo: int
+  codigo: Optional[int]
   cedula_empleado: int
   codigo_proyecto: int
 
 
 class Proyecto(BaseModel):
-  codigo: int
+  codigo: Optional[int]
   nombre: str
   denominacion_comercial: str
   estado_actual: str
 
 
 class Tarea(BaseModel):
-  codigo: int
+  codigo: Optional[int]
   descripcion: str
   duracion_estimada: time
   duracion_real: time
@@ -39,7 +39,7 @@ class Tarea(BaseModel):
 
 
 class Documento(BaseModel):
-  codigo: int
+  codigo: Optional[int]
   documento_especificacion: str
   codigo_fuente: int
   descripcion: str
@@ -48,20 +48,20 @@ class Documento(BaseModel):
 
 
 class Version(BaseModel):
-  codigo: int
+  codigo: Optional[int]
   fecha: date
   descripcion: str
   codigo_documentos: int
 
 
 class EmpleadoTarea(BaseModel):
-  id: int
+  id: Optional[int]
   codigo_tareas: int
   cedula_empleado: int
 
 
 class EmpleadoProyecto(BaseModel):
-  id: int
+  id: Optional[int]
   codigo_proyecto: int
   cedula_empleado: int
 
