@@ -39,7 +39,7 @@ class Tarea(Base):
   codigo = Column(Integer, primary_key=True, autoincrement=True)
   descripcion = Column(String(60))
   duracion_estimada = Column(Time)
-  duracion_real = Column(Date)
+  duracion_real = Column(Time)
   fecha_real = Column(Date)
   fecha_estimada = Column(Date)
   tipo = Column(String(60))
