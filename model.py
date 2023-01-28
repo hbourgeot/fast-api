@@ -55,13 +55,13 @@ class Version(BaseModel):
 
 
 class EmpleadoTarea(BaseModel):
-  codigo: int
+  id: int
   codigo_tareas: int
   cedula_empleado: int
 
 
 class EmpleadoProyecto(BaseModel):
-  codigo: int
+  id: int
   codigo_proyecto: int
   cedula_empleado: int
 
