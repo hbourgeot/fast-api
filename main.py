@@ -238,7 +238,7 @@ def agregar_tarea(proyecto_id: int, tarea: model.Tarea = Body(...), db: Session 
 
 
 # noinspection PyTypeChecker
-@app.patch("/tarea/{tarea_id}")
+@app.patch("/proyecto/{proyecto_id}/tarea/{tarea_id}")
 def modificar_tarea(proyecto_id: int, tarea_id: int, tarea: model.Tarea = Body(...), db: Session = Depends(obtener_bd)):
   try:
     proyecto = db.query(schemas.Proyecto).filter(schemas.Proyecto.codigo == proyecto_id).first()
