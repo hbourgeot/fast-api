@@ -210,7 +210,7 @@ CREATE TABLE `proyectos` (
 
 LOCK TABLES `proyectos` WRITE;
 /*!40000 ALTER TABLE `proyectos` DISABLE KEYS */;
-INSERT INTO `proyectos` VALUES (1,'sol-hsl','Soluciones HSL','Activo'),(2,'hsl','Proyecto HSL','Activo'),(3,'porthen','Pörtafolio de Henry','Inactivo');
+INSERT INTO `proyectos` VALUES (1,'sol-hsl','Soluciones HSL','Activo'),(2,'hsl','Proyecto HSL','Activo');
 /*!40000 ALTER TABLE `proyectos` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -224,11 +224,11 @@ DROP TABLE IF EXISTS `tareas`;
 CREATE TABLE `tareas` (
   `codigo` int NOT NULL AUTO_INCREMENT,
   `descripcion` varchar(60) NOT NULL,
-  `duracion_estimada` time DEFAULT NULL,
+  `duracion_estimada` varchar(10) DEFAULT NULL,
   `tipo` varchar(60) NOT NULL,
   `fecha_real` date DEFAULT NULL,
   `fecha_estimada` date DEFAULT NULL,
-  `duracion_real` time NOT NULL,
+  `duracion_real` varchar(10) NOT NULL,
   `codigo_proyecto` int NOT NULL,
   PRIMARY KEY (`codigo`),
   KEY `codigo_proyecto` (`codigo_proyecto`),
@@ -309,4 +309,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2023-01-28 17:16:46
+-- Dump completed on 2023-01-28 21:54:15

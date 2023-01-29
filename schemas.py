@@ -1,7 +1,7 @@
 from database import Base
 from sqlalchemy import Column, ForeignKey
 from sqlalchemy.orm import relationship
-from sqlalchemy.types import Integer, Date, String, Time, Text, Boolean
+from sqlalchemy.types import Integer, Date, String, Text, Boolean
 
 
 class Empleado(Base):
@@ -38,8 +38,8 @@ class Tarea(Base):
   __tablename__ = "tareas"
   codigo = Column(Integer, primary_key=True, autoincrement=True)
   descripcion = Column(String(60))
-  duracion_estimada = Column(Time)
-  duracion_real = Column(Time)
+  duracion_estimada = Column(String(10))
+  duracion_real = Column(String(10))
   fecha_real = Column(Date)
   fecha_estimada = Column(Date)
   tipo = Column(String(60))
