@@ -9,6 +9,7 @@ from fastapi.exceptions import HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 # SQLAlchemy
 from sqlalchemy.orm import Session
+from sqlalchemy.sql import select
 
 app = FastAPI()
 
@@ -49,17 +50,28 @@ def home():
 def mostrar_proyectos(db: Session = Depends(obtener_bd)):
   try:
     # definimos una lista
-    proyectos_lista = Lista()
+    proyectos_activos = Lista()
+    proyectos_inactivos = Lista()
 
-    # obtenemos los datos de la bd: SELECT * FROM proyectos
+    # obtenemos los datos de la bd usando subconsultas: SELECT * FROM proyectos
+    activos = db.query(schemas.Proyecto.codigo).scalar_subquery()
+
     proyectos = db.query(schemas.Proyecto).all()
-
     for proyecto in proyectos:  # iteramos el objeto
-      proyectos_lista.agregar_final(proyecto)  # empujamos por atrás
+      proyectos_activos.agregar_final(proyecto)  # empujamos por
 
-    respuesta = proyectos_lista.retornar_datos()  # retornamos los datos de la lista
+    inactivos = db.query(schemas.Proyecto.estado_actual).\
+      filter(schemas.Proyecto.estado_actual!="Activo").scalar_subquery()
 
-    del proyectos_lista  # borramos la variable para liberar memoria
+    proyectos = db.query(schemas.Proyecto).filter(schemas.Proyecto.estado_actual.in_(inactivos)).all()
+    for proyecto in proyectos:
+      proyectos_inactivos.agregar_frente(proyecto)
+
+    activos = proyectos_activos.retornar_datos()
+    inactivos = proyectos_inactivos.retornar_datos()
+    respuesta = activos
+
+    del proyectos_activos, proyectos_inactivos  # borramos la variable para liberar memoria
 
     return {"cantidad": len(respuesta), "proyectos": respuesta}
   except Exception as e:
@@ -108,24 +120,6 @@ def actualizar_proyecto(proyecto_id: int, proyecto: model.Proyecto = Body(...), 
     db.refresh(db_proyecto)  # refrescamos la variable con los valores actualizados
 
     return {"estado": "exitoso", "proyecto": db_proyecto}
-  except Exception as e:
-    raise HTTPException(400, str(e))
-
-
-@app.delete("/borrar/proyecto/{proyecto_id}")
-def borrar_proyecto(proyecto_id: int, db: Session = Depends(obtener_bd)):
-  try:
-    # al igual que antes, realizamos la consulta y comprobamos que exista
-    consulta_proyecto = db.query(schemas.Proyecto).filter(schemas.Proyecto.codigo == proyecto_id)
-    proyecto = consulta_proyecto.first()
-    if not proyecto:
-      raise HTTPException(404, "Proyecto no encontrado")
-
-    # si existe, borramos
-    # noinspection PyTypeChecker
-    consulta_proyecto.delete(synchronize_session=False)
-    db.commit()
-    return {"estado": "exitoso"}
   except Exception as e:
     raise HTTPException(400, str(e))
 
@@ -260,24 +254,6 @@ def modificar_tarea(proyecto_id: int, tarea_id: int, tarea: model.Tarea = Body(.
     db.refresh(db_tarea)
 
     return {"estado": "exitoso", "proyecto": db_tarea}
-  except Exception as e:
-    raise HTTPException(400, str(e))
-
-
-# noinspection PyTypeChecker
-@app.delete("/tarea/{tarea_id}")
-def borrar_tarea(tarea_id: int, db: Session = Depends(obtener_bd)):
-  try:
-    consulta_tarea = db.query(schemas.Tarea).filter(schemas.Tarea.codigo == tarea_id)
-    tarea = consulta_tarea.first()
-    if not tarea:
-      raise HTTPException(404, "No existe la tarea")
-
-    consulta_tarea.delete(synchronize_session=False)
-    db.commit()
-
-    del consulta_tarea, tarea
-    return {"estado": "exitoso"}
   except Exception as e:
     raise HTTPException(400, str(e))
 
@@ -509,24 +485,6 @@ def modificar_empleado(empleado_id: int, empleado: model.Empleado = Body(...), d
     db.refresh(db_empleado)
 
     return {"estado": "exitoso", "proyecto": db_empleado}
-  except Exception as e:
-    raise HTTPException(400, str(e))
-
-
-# noinspection PyTypeChecker
-@app.delete("/borrar/empleado/{empleado_id}")
-def borrar_empleado(empleado_id: int, db: Session = Depends(obtener_bd)):
-  try:
-    consulta_empleado = db.query(schemas.Empleado).filter(schemas.Empleado == empleado_id)
-    empleado = consulta_empleado.first()
-    if not empleado:
-      raise HTTPException(404, "No existe el empleado")
-
-    consulta_empleado.delete(synchronize_session=False)
-    db.commit()
-
-    del empleado, consulta_empleado
-    return {"estado": "exitoso"}
   except Exception as e:
     raise HTTPException(400, str(e))
 

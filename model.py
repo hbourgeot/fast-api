@@ -41,7 +41,7 @@ class Tarea(BaseModel):
 class Documento(BaseModel):
   codigo: Optional[int]
   documento_especificacion: str
-  codigo_fuente: int
+  codigo_fuente: str
   descripcion: str
   tipo: str
   codigo_tareas: int
