@@ -13,7 +13,6 @@ class Empleado(Base):
   correo = Column(String(120))
   telefono = Column(String(22))
   fecha_contratacion = Column(Date)           # date
-  proyecto = relationship("EmpleadoProyecto")
 
 
 class Promotor(Base):

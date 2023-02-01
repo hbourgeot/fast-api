@@ -41,8 +41,25 @@ def obtener_bd():               # creamos la conexión con la base de datos
 
 
 @app.get("/")
-def home():
-  return {"terminado": "SÍ 😍😍😍"}
+def home(db: Session = Depends(obtener_bd)):
+  try:
+    # Obtenemos todo de la base de datos
+    proyectos = db.query(schemas.Proyecto).all()
+    empleados = db.query(schemas.Empleado).all()
+    tareas = db.query(schemas.Tarea).all()
+    documentos = db.query(schemas.Documento).all()
+    versiones = db.query(schemas.Version).all()
+
+    return {
+      "estado": "exitoso",
+      "proyectos": proyectos,
+      "empleados": empleados,
+      "tareas": tareas,
+      "documentos": documentos,
+      "versiones": versiones
+    }
+  except Exception as e:
+    raise HTTPException(500, str(e))
 
 
 @app.get("/proyectos")
