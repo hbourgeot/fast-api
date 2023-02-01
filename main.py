@@ -147,9 +147,10 @@ def empleados_del_proyecto(proyecto_id: int, db: Session = Depends(obtener_bd)):
       raise HTTPException(404, "Proyecto no encontrado")
 
     empleados_pila = Pila()
-    empleados_proyecto = db.query(schemas.Empleado)\
-      .join(schemas.EmpleadoProyecto, schemas.Empleado.cedula == schemas.EmpleadoProyecto.cedula_empleado
-            and proyecto_id == schemas.EmpleadoProyecto.codigo_proyecto).all()
+    empleados = db.query(schemas.EmpleadoProyecto.cedula_empleado)\
+      .filter(schemas.EmpleadoProyecto.codigo_proyecto == proyecto_id).scalar_subquery()
+
+    empleados_proyecto = db.query(schemas.Empleado).filter(schemas.Empleado.cedula.in_(empleados))
 
     for empleado in empleados_proyecto:
       empleados_pila.apilar(empleado)
