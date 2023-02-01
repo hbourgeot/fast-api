@@ -9,7 +9,6 @@ from fastapi.exceptions import HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 # SQLAlchemy
 from sqlalchemy.orm import Session
-from sqlalchemy.sql import select
 
 app = FastAPI()
 
@@ -54,14 +53,15 @@ def mostrar_proyectos(db: Session = Depends(obtener_bd)):
     proyectos_inactivos = Lista()
 
     # obtenemos los datos de la bd usando subconsultas: SELECT * FROM proyectos
-    activos = db.query(schemas.Proyecto.codigo).scalar_subquery()
+    activos = db.query(schemas.Proyecto.estado_actual)\
+      .filter(schemas.Proyecto.estado_actual == "Activo").scalar_subquery()
 
     proyectos = db.query(schemas.Proyecto).all()
     for proyecto in proyectos:  # iteramos el objeto
       proyectos_activos.agregar_final(proyecto)  # empujamos por
 
-    inactivos = db.query(schemas.Proyecto.estado_actual).\
-      filter(schemas.Proyecto.estado_actual!="Activo").scalar_subquery()
+    inactivos = db.query(schemas.Proyecto.estado_actual)\
+      .filter(schemas.Proyecto.estado_actual != "Activo").scalar_subquery()
 
     proyectos = db.query(schemas.Proyecto).filter(schemas.Proyecto.estado_actual.in_(inactivos)).all()
     for proyecto in proyectos:
@@ -88,7 +88,7 @@ def agregar_proyecto(proyecto: model.Proyecto = Body(...), db: Session = Depends
     del db_proyecto
 
     codigo = len(db.query(schemas.Proyecto).all()) + 1
-    nuevo_proyecto = schemas.Proyecto(codigo=codigo,nombre=proyecto.nombre,
+    nuevo_proyecto = schemas.Proyecto(codigo=codigo, nombre=proyecto.nombre,
                                       denominacion_comercial=proyecto.denominacion_comercial,
                                       estado_actual=proyecto.estado_actual,
                                       )     # creamos al nuevo proyecto
@@ -158,7 +158,7 @@ def empleados_del_proyecto(proyecto_id: int, db: Session = Depends(obtener_bd)):
 
     del empleados_pila, proyecto
 
-    return {"cantidad": len(respuesta), "tareas": respuesta}
+    return {"cantidad": len(respuesta), "empleados": respuesta}
   except Exception as e:
     raise HTTPException(400, str(e))
 
@@ -184,6 +184,7 @@ def mostrar_tareas_del_proyecto(proyecto_id: int, db: Session = Depends(obtener_
   except Exception as e:
     raise HTTPException(400, str(e))
 
+
 @app.get("/tareas")
 def mostrar_tareas(db: Session = Depends(obtener_bd)):
   try:
@@ -200,6 +201,7 @@ def mostrar_tareas(db: Session = Depends(obtener_bd)):
     return {"cantidad": len(respuesta), "tareas": respuesta}
   except Exception as e:
     raise HTTPException(400, str(e))
+
 
 @app.post("/proyecto/{proyecto_id}/crear/tarea")
 def agregar_tarea(proyecto_id: int, tarea: model.Tarea = Body(...), db: Session = Depends(obtener_bd)):
@@ -253,7 +255,7 @@ def modificar_tarea(proyecto_id: int, tarea_id: int, tarea: model.Tarea = Body(.
     db.commit()
     db.refresh(db_tarea)
 
-    return {"estado": "exitoso", "proyecto": db_tarea}
+    return {"estado": "exitoso", "tarea": db_tarea}
   except Exception as e:
     raise HTTPException(400, str(e))
 
@@ -484,7 +486,7 @@ def modificar_empleado(empleado_id: int, empleado: model.Empleado = Body(...), d
     db.commit()
     db.refresh(db_empleado)
 
-    return {"estado": "exitoso", "proyecto": db_empleado}
+    return {"estado": "exitoso", "empleado": db_empleado}
   except Exception as e:
     raise HTTPException(400, str(e))
 
