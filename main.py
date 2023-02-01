@@ -73,7 +73,7 @@ def mostrar_proyectos(db: Session = Depends(obtener_bd)):
     activos = db.query(schemas.Proyecto.estado_actual)\
       .filter(schemas.Proyecto.estado_actual == "Activo").scalar_subquery()
 
-    proyectos = db.query(schemas.Proyecto).all()
+    proyectos = db.query(schemas.Proyecto).filter(schemas.Proyecto.estado_actual.in_(activos)).all()
     for proyecto in proyectos:  # iteramos el objeto
       proyectos_activos.agregar_final(proyecto)  # empujamos por
 
@@ -86,7 +86,7 @@ def mostrar_proyectos(db: Session = Depends(obtener_bd)):
 
     activos = proyectos_activos.retornar_datos()
     inactivos = proyectos_inactivos.retornar_datos()
-    respuesta = activos
+    respuesta = {"activos": activos, "inactivos": inactivos}
 
     del proyectos_activos, proyectos_inactivos  # borramos la variable para liberar memoria
 
