@@ -1,4 +1,3 @@
-# Lista enlazada
 class Nodo:
   def __init__(self, dato=None, sgte=None):  # None = NULL
     self.dato = dato
@@ -6,14 +5,12 @@ class Nodo:
 
 # Creamos la clase Lista
 
-
 class Lista:
 
   def __init__(self): #DepartamentoEscuela
     self.cbza = None
 
   # Método para agregar elementos en el frente de la lista enlazada
-
   def agregar_frente(self, dato):
     self.cbza = Nodo(dato=dato, sgte=self.cbza)
 
@@ -30,7 +27,6 @@ class Lista:
     actual.sgte = Nodo(dato=dato)
 
   # Método para imprimir la lista enlazada
-
   def retornar_datos(self):
 
     nodo = self.cbza
@@ -43,7 +39,6 @@ class Lista:
     return datos
 
 # Pilas
-
 
 class Pila:
 

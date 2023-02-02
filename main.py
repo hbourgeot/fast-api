@@ -66,29 +66,15 @@ def home(db: Session = Depends(obtener_bd)):
 def mostrar_proyectos(db: Session = Depends(obtener_bd)):
   try:
     # definimos una lista
-    proyectos_activos = Lista()
-    proyectos_inactivos = Lista()
+    proyectos_lista = Lista()
 
-    # obtenemos los datos de la bd usando subconsultas: SELECT * FROM proyectos
-    activos = db.query(schemas.Proyecto.estado_actual)\
-      .filter(schemas.Proyecto.estado_actual == "Activo").scalar_subquery()
-
-    proyectos = db.query(schemas.Proyecto).filter(schemas.Proyecto.estado_actual.in_(activos)).all()
+    proyectos = db.query(schemas.Proyecto).all()
     for proyecto in proyectos:  # iteramos el objeto
-      proyectos_activos.agregar_final(proyecto)  # empujamos por
+      proyectos_lista.agregar_final(proyecto)  # empujamos por atras
 
-    inactivos = db.query(schemas.Proyecto.estado_actual)\
-      .filter(schemas.Proyecto.estado_actual != "Activo").scalar_subquery()
+    respuesta = proyectos_lista.retornar_datos()
 
-    proyectos = db.query(schemas.Proyecto).filter(schemas.Proyecto.estado_actual.in_(inactivos)).all()
-    for proyecto in proyectos:
-      proyectos_inactivos.agregar_frente(proyecto)
-
-    activos = proyectos_activos.retornar_datos()
-    inactivos = proyectos_inactivos.retornar_datos()
-    respuesta = {"activos": activos, "inactivos": inactivos}
-
-    del proyectos_activos, proyectos_inactivos  # borramos la variable para liberar memoria
+    del proyectos_lista  # borramos la variable para liberar memoria
 
     return {"cantidad": len(respuesta), "proyectos": respuesta}
   except Exception as e:
@@ -100,7 +86,7 @@ def agregar_proyecto(proyecto: model.Proyecto = Body(...), db: Session = Depends
   try:
     db_proyecto = db.query(schemas.Proyecto).filter(schemas.Proyecto.codigo == proyecto.codigo).first()
     if db_proyecto:
-      raise HTTPException(404, "El proyecto ya existe")
+      raise HTTPException(400, "El proyecto no existe")
 
     del db_proyecto
 
